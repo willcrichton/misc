@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Fig","Generate fig completion file"]]};
