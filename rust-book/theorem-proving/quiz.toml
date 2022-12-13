@@ -1,0 +1,36 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = """
+Which statement best describes the difference between writing a type like this:
+
+```lean
+∀ x y z, p x y z
+```
+
+Versus this:
+
+```lean
+∀ {x y z}, p x y z
+```
+"""
+answer.answer = "The curly braces make the parameters implicit: inferred from context"
+prompt.distractors = [
+  "The curly braces make the parameters optional: the proposition does not always need them to be true",
+  "The curly braces make the parameters scoped: they cannot be referenced outside of this proposition"
+]
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = """
+Consider the natural language statement of a mathematical theorem:
+
+> Let `f` be a function from an arbitrary type to that same type. 
+> If an input `a` to `f` has a property, then the output `f a` has the same property.
+
+Which Lean type best represents this theorem?
+"""
+answer.answer = "`∀ (α: Type) (f : α → α) (a : α) (p : α → Prop), p a → p (f a)`"
+prompt.distractors = [
+  "`∀ (α: Type), α → α → (α → Prop) → Prop`",
+  "`∀ (α : Type) (f : α → α) (p : α → Prop), α → p → (f p)`"
+]
