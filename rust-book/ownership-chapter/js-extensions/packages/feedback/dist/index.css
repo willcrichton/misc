@@ -1,28 +1,33 @@
-/* ../../../../../../../var/folders/7b/lz0rl9x94ksd2g7glr0bzjw40000gn/T/tmp-99874-EWf63mWvi4gq/feedback/feedback.css */
+/* ../../../../../../../var/folders/7b/lz0rl9x94ksd2g7glr0bzjw40000gn/T/tmp-26218-25QiTgg3nujO/feedback/feedback.css */
 .ayu {
   --popper-bg: var(--quote-bg);
   --popper-bg-hover: #1D1F21;
   --popper-color: var(--fg);
+  --highlight: #46480f;
 }
 .coal {
   --popper-bg: var(--quote-bg);
   --popper-bg-hover: #1D1F21;
   --popper-color: var(--fg);
+  --highlight: #46480f;
 }
 .light {
   --popper-bg: #262625;
   --popper-bg-hover: #aaaaaa;
   --popper-color: white;
+  --highlight: #ffffc1;
 }
 .navy {
   --popper-bg: var(--quote-bg);
   --popper-bg-hover: #1D1F21;
   --popper-color: var(--fg);
+  --highlight: #46480f;
 }
 .rust {
   --popper-bg: var(--quote-bg);
   --popper-bg-hover: #aaaaaa;
   --popper-color: var(--fg);
+  --highlight: #fdf2ca;
 }
 .pop {
   background-color: var(--popper-bg);
@@ -98,15 +103,7 @@
 .ReactModal__Overlay textarea {
   font-size: 16px;
 }
-html.light .highlight-mengshou-wrap {
-  background: #ffffc1;
-}
-html.rust .highlight-mengshou-wrap {
-  background: #fdf2ca;
-}
-html.coal .highlight-mengshou-wrap,
-html.navy .highlight-mengshou-wrap,
-html.ayu .highlight-mengshou-wrap {
-  background: #46480f;
+.highlight-mengshou-wrap {
+  background-color: var(--highlight);
 }
 /*# sourceMappingURL=index.css.map */

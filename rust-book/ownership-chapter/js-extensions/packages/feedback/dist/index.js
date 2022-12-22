@@ -27964,7 +27964,12 @@
     const [modalOpen, setModalOpen] = (0, import_react5.useState)(false);
     const handleSelection = (0, import_react5.useCallback)(() => {
       let selection = document.getSelection();
-      let range = selection && !selection.isCollapsed && selection.rangeCount && selection.getRangeAt(0);
+      if (!selection)
+        return;
+      let anchor = selection.anchorNode;
+      if (!anchor || !(anchor instanceof HTMLElement) || !anchor.closest(".content") || anchor.closest(".aquascope, .mdbook-quiz"))
+        return;
+      let range = !selection.isCollapsed && selection.rangeCount && selection.getRangeAt(0);
       setCurrRange(range || null);
     }, []);
     (0, import_react5.useEffect)(() => {

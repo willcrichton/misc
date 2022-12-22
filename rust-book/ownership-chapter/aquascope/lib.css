@@ -1,0 +1,171 @@
+/* ../aquascope-editor/dist/lib.css */
+.aquascope {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+.aquascope .aquascope-loan {
+  text-decoration: underline 3px rgba(255, 255, 255, 0);
+  transition: 1s all;
+}
+.aquascope .aquascope-live-region {
+  background-color: rgba(255, 255, 255, 0);
+  border-radius: 5px;
+  transition: 1s all;
+}
+.aquascope .aquascope-stderr {
+  padding: 15px;
+  background-color: #f9ffff;
+  font-family: "Source Code Pro", monospace;
+  font-size: 0.9em;
+  overflow: scroll;
+}
+.aquascope span.cm-region-end {
+  font-family:
+    "Verdana",
+    sans-serif,
+    bold;
+  text-align: center;
+  vertical-align: bottom;
+  padding: 0;
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  transition: 1s all;
+}
+.aquascope .top-right {
+  z-index: 10;
+  position: absolute;
+  top: 8px;
+  right: 2px;
+}
+.aquascope .cm-button {
+  opacity: 0;
+  font-size: 14px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin: 0px 5px;
+  transition: 100ms;
+  transition-property:
+    color,
+    border-color,
+    background-color,
+    opacity;
+  cursor: pointer;
+}
+.aquascope:hover .cm-button {
+  opacity: 1;
+}
+.aquascope cm-tooltip-cursor {
+  font-size: 0.8em;
+  background-color: whitesmoke;
+  border-color: gainsboro;
+  border: 2px;
+  padding: 2px 7px 2px 2px;
+  border-radius: 4px;
+}
+.aquascope cm-tooltip-cursor.cm-tooltip-arrow ::before {
+  border-top-color: whitesmoke;
+}
+.aquascope cm-tooltip-cursor .cm-tooltip-arrow ::after {
+  border-top-color: transparent;
+}
+.aquascope .cm-scroller {
+  overflow: auto;
+}
+.aquascope .perm-step-widget {
+  display: inline-block;
+  color: #ccc;
+}
+.aquascope .perm-step-table {
+  background-color: whitesmoke;
+  display: inline-block;
+  border: 2px solid;
+  border-color: gainsboro;
+  border-radius: 4px;
+  color: black;
+  margin-bottom: 5px;
+  position: relative;
+  bottom: 3px;
+}
+.aquascope table.perm-step-table {
+  vertical-align: top;
+  border-collapse: collapse;
+}
+.aquascope .perm-step-table tr td {
+  border: 1px dotted;
+  border-color: gainsboro;
+}
+.aquascope span.perm-diff-add {
+  color: rgb(93, 202, 54);
+}
+.aquascope spen.perm-diff-none {
+  color: lightgray;
+}
+.aquascope span.perm-diff-sub {
+  color: rgb(255, 66, 68);
+}
+.aquascope .aquascope-action-indicator {
+  font-size: 0.9em;
+}
+
+/* src/styles.scss */
+.light,
+.rust {
+  --code-bg: #f6f7f6;
+}
+.coal,
+.navy {
+  --code-bg: #1d1f21;
+}
+.ayu {
+  --code-bg: #191f26;
+}
+.aquascope {
+  border: 2px dashed var(--theme-popup-border);
+}
+.aquascope .cm-editor {
+  background-color: var(--code-bg);
+}
+.aquascope .cm-scroller {
+  line-height: inherit;
+}
+.aquascope .cm-content {
+  padding: 1rem;
+  font-family:
+    "Source Code Pro",
+    Consolas,
+    "Ubuntu Mono",
+    Menlo,
+    "DejaVu Sans Mono",
+    monospace,
+    monospace;
+  font-size: 0.875em;
+}
+.aquascope .cm-line {
+  padding: 0;
+}
+.aquascope .cm-button {
+  border-color: var(--icons);
+  background-color: var(--theme-popup-bg);
+  color: var(--icons);
+}
+.aquascope .cm-button:hover {
+  color: var(--sidebar-active);
+  border-color: var(--icons-hover);
+  background-color: var(--theme-hover);
+}
+.aquascope .perm-step-widget {
+  color: var(--table-header-bg);
+}
+.aquascope .perm-step-table {
+  color: var(--sidebar-fg);
+  background-color: var(--sidebar-bg);
+  border-color: var(--table-header-bg);
+}
+.aquascope .perm-step-table td {
+  padding: 1px 4px;
+}
+/*# sourceMappingURL=lib.css.map */
