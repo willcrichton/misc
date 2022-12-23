@@ -32327,8 +32327,7 @@
     value
   });
   var is_ok = (res) => res.type === "output";
-  var DEFAULT_SERVER_HOST = "aquascope.willcrichton.net";
-  var DEFAULT_SERVER_PORT = "443";
+  var DEFAULT_SERVER_URL = new URL("http://127.0.0.1:8008");
   var defaultCodeExample = `
 trait Kill {
   fn kill(self);
@@ -32353,11 +32352,10 @@ fn main() {
     constructor(dom, setup2, supportedFields, reportStdErr = function(err) {
       console.log("An error occurred: ");
       console.log(err);
-    }, initialCode = defaultCodeExample, serverHost = DEFAULT_SERVER_HOST, serverPort = DEFAULT_SERVER_PORT, noInteract = false) {
+    }, initialCode = defaultCodeExample, serverUrl = DEFAULT_SERVER_URL, noInteract = false) {
       this.setup = setup2;
       this.reportStdErr = reportStdErr;
-      this.serverHost = serverHost;
-      this.serverPort = serverPort;
+      this.serverUrl = serverUrl;
       this.noInteract = noInteract;
       let initialState = EditorState.create({
         doc: initialCode,
@@ -32400,18 +32398,16 @@ fn main() {
     }
     async callBackendWithCode(endpoint) {
       let inEditor = this.getCurrentCode();
-      let serverResponseRaw = await fetch(
-        `https://${this.serverHost}:${this.serverPort}/${endpoint}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            code: inEditor
-          })
-        }
-      );
+      let endpointUrl = new URL(endpoint, this.serverUrl);
+      let serverResponseRaw = await fetch(endpointUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code: inEditor
+        })
+      });
       let serverResponse = await serverResponseRaw.json();
       return serverResponse;
     }
@@ -33489,6 +33485,7 @@ fn main() {
 
   // src/lib.ts
   var initEditors = () => {
+    let serverUrl = new URL("https://aquascope.willcrichton.net");
     document.querySelectorAll(".aquascope").forEach((elem) => {
       let pre = elem;
       let btnWrap = document.createElement("div");
@@ -33515,8 +33512,7 @@ fn main() {
             console.error(err);
         },
         initialCode,
-        serverHost,
-        serverPort,
+        serverUrl,
         readOnly3
       );
       computePermBtn.addEventListener("click", (_2) => {

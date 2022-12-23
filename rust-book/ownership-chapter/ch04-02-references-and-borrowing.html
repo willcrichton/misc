@@ -159,7 +159,7 @@
 fn greet(g1: String, g2: String) {
     println!(&quot;{} {}!&quot;, g1, g2);
 }</code></pre></pre>
-<p>In this example, calling <code>greet</code> moves <code>m1</code> and <code>m2</code> into <code>greet</code>. Both strings are dropped at the end of <code>greet</code>, and therefore cannot be used within <code>main</code>. </p>
+<p>In this example, calling <code>greet</code> moves <code>m1</code> and <code>m2</code> into <code>greet</code>. Both strings are dropped at the end of <code>greet</code>, and therefore cannot be used within <code>main</code>.</p>
 <p>This move behavior is extremely inconvenient. Programs often need to use a string more than once. Hypothetically, an alternative <code>greet</code> can return ownership of the strings:</p>
 <pre><pre class="playground"><code class="language-rust">fn main() {
     let m1 = String::from(&quot;Hello&quot;);
@@ -187,37 +187,36 @@ fn greet(g1: &amp;String, g2: &amp;String) { // note the ampersands
     // L2
     println!(&quot;{} {}!&quot;, g1, g2);
 }</code></pre></pre>
-<p>The expression <code>&amp;m1</code> uses the ampersand operator to create a reference to <code>m1</code> on the stack. The type of <code>g1</code> is also changed to <code>&amp;String</code>, meaning &quot;a reference to a <code>String</code>&quot;. At runtime, the references look like this:</p>
+<p>The expression <code>&amp;m1</code> uses the ampersand operator to create a reference to <code>m1</code>. The type of <code>g1</code> is also changed to <code>&amp;String</code>, meaning &quot;a reference to a <code>String</code>&quot;. At runtime, the references look like this:</p>
 <img src="img/experiment/ch04-02-stack1.jpg" class="center" width="350" />
-<p>Observe at L2 that there are two steps from <code>g1</code> to the string &quot;Hello&quot;. <code>g1</code> is a reference that points to <code>m1</code> on the stack, and <code>m1</code> is a box that points to &quot;Hello&quot; on the heap.</p>
-<p>While <code>m1</code> owns the heap data &quot;Hello&quot;, <code>g1</code> does <em>not</em> own either <code>m1</code> or &quot;Hello&quot;. Therefore after <code>greet</code> ends and the program reaches L3, no heap data has been deallocated. Only the stack frame for <code>greet</code> disappears. This fact is consistent with our Moved Heap Data Principle: because <code>g1</code> did not own &quot;Hello&quot;, Rust did not deallocate &quot;Hello&quot; on behalf of <code>g1</code>. </p>
+<p>Observe at L2 that there are two steps from <code>g1</code> to the string &quot;Hello&quot;. <code>g1</code> is a reference that points to <code>m1</code> on the stack, and <code>m1</code> is a String containing a box that points to &quot;Hello&quot; on the heap.</p>
+<p>While <code>m1</code> owns the heap data &quot;Hello&quot;, <code>g1</code> does <em>not</em> own either <code>m1</code> or &quot;Hello&quot;. Therefore after <code>greet</code> ends and the program reaches L3, no heap data has been deallocated. Only the stack frame for <code>greet</code> disappears. This fact is consistent with our Moved Heap Data Principle: because <code>g1</code> did not own &quot;Hello&quot;, Rust did not deallocate &quot;Hello&quot; on behalf of <code>g1</code>.</p>
 <p>References are <strong>non-owning pointers</strong>, because they do not own the data they point-to.</p>
 <h3 id="dereferencing-a-pointer-accesses-its-data"><a class="header" href="#dereferencing-a-pointer-accesses-its-data">Dereferencing a Pointer Accesses Its Data</a></h3>
 <p>The previous examples using boxes and strings have not shown how Rust &quot;follows&quot; a pointer to its data. For example, the <code>println!</code> macro has mysteriously worked for inputs that were both plain strings of type <code>String</code>, and references to strings of type <code>&amp;String</code>. The underlying mechanism is the <strong>dereference</strong> operator, written with an asterisk (<code>*</code>). For example, here's a program that uses dereferences in a few different ways:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">fn main() {
 </span>let mut x: Box&lt;i32&gt; = Box::new(1);
-let a: i32 = *x;
-*x += 1;
+let a: i32 = *x;         // *x reads the heap value, so a = 1
+*x += 1;                 // *x on the left-side modifies the heap value, x points to the value 2
 
-let r1: &amp;Box&lt;i32&gt; = &amp;x;
-let b: i32 = **r1;
+let r1: &amp;Box&lt;i32&gt; = &amp;x;  // r1 points to x on the stack
+let b: i32 = **r1;       // two dereferences get us to the heap value
 
-let r2: &amp;i32 = &amp;*x;
-let c: i32 = *r2;
-// L1
+let r2: &amp;i32 = &amp;*x;      // r2 points to the heap value directly
+let c: i32 = *r2;        // so only one dereference is needed to read it
 <span class="boring">}</span></code></pre></pre>
 <p>And here is the state of memory at the end of the program:</p>
 <img src="img/experiment/ch04-02-stack2.jpg" class="center" width="250" />
-<p>Let's walk through each line:</p>
-<ol>
-<li>First, we create a box <code>x</code> with <code>Box::new(1)</code>.</li>
-<li>The expression <code>*x</code> dereferences <code>x</code>, which copies the value <code>1</code> off the heap. Then <code>let a = *x</code> puts <code>1</code> into the stack slot for <code>a</code>.</li>
-<li>By putting the dereference on the left-hand side of <code>*x += 1</code>, we are modifying the heap data in-place. The heap value for <code>x</code> now contains <code>2</code>.</li>
-<li>The statement <code>let r1 = &amp;x</code> creates a reference to <code>x</code>, which points to <code>x</code> on the stack. <code>r1</code> has type <code>&amp;Box&lt;i32&gt;</code>, a reference to a box of a 32-bit integer.</li>
-<li>The statement <code>let b = **r1</code> follows the two-step pointer: <code>*r</code> goes to <code>x</code>, and <code>**r1</code> goes to the heap value <code>2</code>, therefore <code>b</code> is bound to <code>2</code>.</li>
-<li>The statement <code>let r2 = &amp;*x</code> dereferences <code>x</code> to its heap data, and gets a pointer to the heap. <code>r2</code> then points <em>directly</em> to the heap, bypassing <code>x</code>.</li>
-<li>The statement <code>let c = *r2</code> dereferences <code>r2</code> once, getting the value <code>2</code> from the heap.</li>
-</ol>
+<p>Observe the difference between <code>r1</code> pointing to <code>x</code> on the stack, and <code>r2</code> pointing to the the heap value <code>2</code>.</p>
+<!--
+Let's walk through each line:
+1. First, we create a box `x` with `Box::new(1)`.
+2. The expression `*x` dereferences `x`, which copies the value `1` off the heap. Then `let a = *x` puts `1` into the stack slot for `a`.
+3. By putting the dereference on the left-hand side of `*x += 1`, we are modifying the heap data in-place. The heap value for `x` now contains `2`.
+4. The statement `let r1 = &x` creates a reference to `x`, which points to `x` on the stack. `r1` has type `&Box<i32>`, a reference to a box of a 32-bit integer.
+5. The statement `let b = **r1` follows the two-step pointer: `*r` goes to `x`, and `**r1` goes to the heap value `2`, therefore `b` is bound to `2`.
+6. The statement `let r2 = &*x` dereferences `x` to its heap data, and gets a pointer to the heap. `r2` then points *directly* to the heap, bypassing `x`.
+7. The statement `let c = *r2` dereferences `r2` once, getting the value `2` from the heap. -->
 <p>You probably won't see the dereference operator very often when you read Rust code. This is because Rust implicitly inserts both dereferences and references in certain cases, such as calling a method with the dot operator. For example, this program shows two equivalent ways of calling the <a href="https://doc.rust-lang.org/std/primitive.i32.html#method.abs"><code>i32::abs</code></a> (absolute value) and <a href="https://doc.rust-lang.org/std/primitive.str.html#method.len"><code>str::len</code></a> (string length) functions:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">fn main()  {
 </span>let x: Box&lt;i32&gt; = Box::new(-1);
@@ -245,15 +244,16 @@ assert_eq!(n1, n2);
 <p><strong>Pointer Safety Principle</strong>: data should never be aliased and mutated at the same time.</p>
 </blockquote>
 <p>Data is allowed to be aliased. Data is allowed to be mutated. But data is <em>not</em> allowed to be <em>both</em> aliased <em>and</em> mutated. For example, Rust enforces this principle for boxes (owned pointers) by disallowing aliasing. Assigning a box from one variable to another will move ownership, invalidating the previous variable. Owned data can only be accessed through the owner — no aliases.</p>
-<p>However, references need different rules to enforce the Pointer Safety Principle because they are non-owning pointers. By design, references are meant to temporarily create aliases. In the remainder of this section, we will explain the basics of how Rust checks for the safety of programs with references.</p>
+<p>However, references need different rules to enforce the Pointer Safety Principle because they are non-owning pointers. By design, references are meant to temporarily create aliases. In the remainder of this section, we will explain the basics of how Rust ensures the safety of programs with references.</p>
 <h3 id="references-change-permissions-on-paths"><a class="header" href="#references-change-permissions-on-paths">References Change Permissions on Paths</a></h3>
 <p>The core idea is that variables have three kinds of <strong>permissions</strong> on their data:</p>
 <ul>
-<li><strong>Read</strong> (R): data can be copied to another location.</li>
-<li><strong>Write</strong> (W): data can be mutated in-place.</li>
-<li><strong>Own</strong> (O): data can be moved or dropped.</li>
+<li><strong>Read</strong> (<code>R</code>): data can be copied to another location.</li>
+<li><strong>Write</strong> (<code>W</code>): data can be mutated in-place.</li>
+<li><strong>Own</strong> (<code>O</code>): data can be moved or dropped.</li>
 </ul>
-<p>By default, a variable has read and own permissions (<code>RO</code>) on its data, as well as write (<code>W</code>) if annotated with <code>let mut</code>. However, a reference can temporarily change those permissions. Here is a simple example that is annotated with changes in permissions after each line in the program:</p>
+<p>These permissions don't exist at runtime, only within the compiler. They describe how the compiler &quot;thinks&quot; about your program before the program is ever executed.</p>
+<p>By default, a variable has read/own permissions (<code>RO</code>) on its data. If a variable is annotated with <code>let mut</code>, then it also has write permissions (<code>W</code>). The key idea is that <strong>references can temporarily remove these permissions.</strong> Here is a simple example that is annotated with changes in permissions after each line in the program:</p>
 <pre class="aquascope">
 fn main() {
     let mut x = 1;
@@ -267,7 +267,7 @@ fn main() {
 <li>After <code>let mut x = 1</code>, the variable <code>x</code> has been initialized (indicated by <i class="fa fa-level-up"></i>). It gains read/write/own permissions.</li>
 <li>After <code>let y = &amp;x</code>, the variable <code>x</code> has been <strong>borrowed</strong> by <code>y</code> (indicated by <i class="fa fa-arrow-right"></i>). Three things happen:
 <ul>
-<li>The borrow removes write/own permissions from <code>x</code>: it cannot write or own its data, but it can still read its data. </li>
+<li>The borrow removes write/own permissions from <code>x</code>: it cannot write or own its data, but it can still read its data.</li>
 <li>The variable <code>y</code> has gained read/own permissions. <code>y</code> is not writable because it was not marked <code>let mut</code>.</li>
 <li>The <strong>path</strong> <code>*y</code> has gained read permissions.</li>
 </ul>
@@ -298,12 +298,12 @@ fn main() {
 }
 </pre>
 <p>The statement <code>let y = &amp;x.0</code> borrows <code>x.0</code> which removes write/own permissions from <code>x.0</code> and <code>x</code>. However, <code>x.1</code> still retains write permissions, so doing <code>x.1 += 1</code> is a valid operation.</p>
-<p>Returning to the Pointer Safety Principle, the goal of these permissions is to ensure that data cannot be mutated if it is aliased. Creating a reference to data (&quot;borrowing&quot; it) makes that data temporarily read-only until the reference is no longer used.</p>
+<p>Returning to the Pointer Safety Principle, the goal of these permissions is to ensure that data cannot be mutated if it is aliased. Creating a reference to data (&quot;borrowing&quot; it) causes that data to be temporarily read-only until the reference is no longer used.</p>
 <!-- The key thing to observe is that a variable's *type* is not the same as its *permissions*. A variable always has the same type, but its permissions will change depending on context. Specifically, a variable loses permissions when its contents are borrowed by a reference. It regains those permissions when the reference is no longer used.
 
 Permissions are a compile-time concept, not a run-time concept. The Rust compiler has a program analyzer called the "borrow checker" which statically checks your program for permissions violations. -->
 <h3 id="the-borrow-checker-finds-permission-violations"><a class="header" href="#the-borrow-checker-finds-permission-violations">The Borrow Checker Finds Permission Violations</a></h3>
-<p>Rust uses these permissions in its <strong>borrow checker</strong>. The borrow checker determines whether a program is doing potentially unsafe operations involving references. For example, let's say we moved the <code>x += 1</code> statement inbetween the definition of <code>y</code> and the use of <code>*y</code>, like this: </p>
+<p>Rust uses these permissions in its <strong>borrow checker</strong>. The borrow checker determines whether a program is doing potentially unsafe operations involving references. For example, let's say we moved the <code>x += 1</code> statement in-between the definition of <code>y</code> and the use of <code>*y</code>, like this:</p>
 <pre><code class="language-rust ignore does_not_compile"><span class="boring">fn main() {
 </span>let mut x = 1;
 let y = &amp;x;
@@ -321,7 +321,7 @@ println!(&quot;{} = {}&quot;, x, *y);
 5 | println!(&quot;{} = {}&quot;, x, *y);
   |                        -- borrow later used here
 </code></pre>
-<p>This error reflects the fact that <code>x</code> does not have write permissions inbetween <code>let y = &amp;x</code> and <code>println!(..)</code>.</p>
+<p>This error reflects the fact that <code>x</code> does not have write permissions in-between <code>let y = &amp;x</code> and <code>println!(..)</code>.</p>
 <p>Now you may think that Rust is being overzealous here — what's the harm in incrementing <code>x</code>? That won't affect the reference <code>y</code>. But here is a similar example with an actual safety issue:</p>
 <pre><code class="language-rust ignore does_not_compile"><span class="boring">fn main() {
 </span>let mut v = vec![1, 2, 3];
@@ -331,12 +331,13 @@ v.push(4);
 // L2
 println!(&quot;{:?}, {}&quot;, v, *n);
 <span class="boring">}</span></code></pre>
-<p>This program could possibly have the following states at L1 and L2:</p>
+<p>Depending on the capacity of <code>v</code>, this program could potentially have the following states at L1 and L2:</p>
 <img src="img/experiment/ch04-02-stack3.jpg" class="center" width="300" />
-<p>The function <code>v.push(4)</code> could potentially resize <code>v</code>, deallocating its original contents. This operation would invalidate the reference <code>n</code>, leading it to point to deallocated memory. The subsequent read of <code>*n</code> would therefore be undefined behavior. </p>
-<p>Thankfully, Rust rejects this program. The statement <code>&amp;v[0]</code> borrows the vector <code>v</code>, which removes write permissions from <code>v</code>, so <code>v.push(4)</code> is flagged as a permissions violation. </p>
-<p>In sum, Rust's borrow checker prevents <em>all</em> unsafe uses of references (like <code>v.push(4)</code>). However, it also prevents <em>some</em> safe uses of references (like <code>x += 1</code>). Understanding this distinction will help you deal with Rust compiler errors. </p>
-<p>Safe operations can often be rewritten using data structures designed to work around Rust's limitations. For example, you could rewrite the <code>x += 1</code> program using a different construct like a <a href="https://doc.rust-lang.org/std/cell/struct.Cell.html"><code>Cell</code></a> or an <a href="https://doc.rust-lang.org/std/sync/atomic/struct.AtomicUsize.html"><code>AtomicUsize</code></a>:</p>
+<p>The function <code>v.push(4)</code> could resize <code>v</code>, deallocating its original contents. This operation would invalidate the reference <code>n</code>, leading it to point to deallocated memory. The subsequent read of <code>*n</code> would therefore be undefined behavior.</p>
+<p>Thankfully, Rust rejects this program. The statement <code>&amp;v[0]</code> borrows the vector <code>v</code>, which removes write permissions from <code>v</code>, so <code>v.push(4)</code> is flagged as a permissions violation.</p>
+<p>In sum, Rust's borrow checker prevents <em>all</em> unsafe uses of references (like <code>v.push(4)</code>). However, it also prevents <em>some</em> safe uses of references (like <code>x += 1</code>). That is an important point: just because Rust rejects your program does not mean your program is <em>definitely</em> unsafe!</p>
+<h3 id="fixing-a-borrow-checker-error-depends-on-the-safety-of-the-program"><a class="header" href="#fixing-a-borrow-checker-error-depends-on-the-safety-of-the-program">Fixing a Borrow Checker Error Depends on the Safety of the Program</a></h3>
+<p>Understanding the distinction between safe and unsafe uses of references will help you deal with Rust compiler errors. Safe operations can often be rewritten using data structures designed to work around Rust's limitations. For example, you could rewrite the <code>x += 1</code> program using a different construct like a <a href="https://doc.rust-lang.org/std/cell/struct.Cell.html"><code>Cell</code></a> or an <a href="https://doc.rust-lang.org/std/sync/atomic/struct.AtomicUsize.html"><code>AtomicUsize</code></a>:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">use std::cell::Cell;
 </span><span class="boring">use std::sync::atomic::{Ordering, AtomicUsize};
 </span><span class="boring">fn main() {
@@ -356,23 +357,23 @@ println!(&quot;{} {}&quot;, x.load(Ordering::SeqCst), y.load(Ordering::SeqCst))
 </span>let mut v = vec![1, 2, 3];
 let n_idx = 0;
 v.push(4);
-println!(&quot;{:?}, {}&quot;, v, v[n_idx]);    
+println!(&quot;{:?}, {}&quot;, v, v[n_idx]);
 <span class="boring">}</span></code></pre></pre>
 <p>Or to move the borrow after the mutation, like this:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">fn main() {
 </span>let mut v = vec![1, 2, 3];
 v.push(4);
 let n = &amp;v[0];
-println!(&quot;{:?}, {}&quot;, v, *n);    
+println!(&quot;{:?}, {}&quot;, v, *n);
 <span class="boring">}</span></code></pre></pre>
 <p>The right solution will naturally depend on the specific circumstances of your codebase. But at the very least, whenever you get an error from Rust's borrow checker, you should ask: is my code actually unsafe? The answer will guide how you can change your code to satisfy Rust.</p>
 <h3 id="mutable-references-provide-unique-and-non-owning-access-to-data"><a class="header" href="#mutable-references-provide-unique-and-non-owning-access-to-data">Mutable References Provide Unique and Non-Owning Access to Data</a></h3>
-<p>The references we have seen so far are read-only: <strong>immutable references</strong> (also called shared references). These references permit aliasing but disallow mutation. However, it is also convenient to be able to temporarily provide mutable access to data without moving ownership of it. For example, the <a href="https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push"><code>Vec::push</code></a> should add an element to a vector without consuming ownership of it.</p>
-<p>The mechanism for this is <strong>mutable references</strong> (also called unique references). Here's a simple example of a mutable reference with the accompanying permissions changes:</p>
+<p>The references we have seen so far are read-only: <strong>immutable references</strong> (also called <strong>shared references</strong>). These references permit aliasing but disallow mutation. However, it is also convenient to be able to temporarily provide mutable access to data without moving it. For example, the <a href="https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push"><code>Vec::push</code></a> should add an element to a vector without consuming ownership of the vector.</p>
+<p>The mechanism for this is <strong>mutable references</strong> (also called <strong>unique references</strong>). Here's a simple example of a mutable reference with the accompanying permissions changes:</p>
 <pre class="aquascope">
 fn main() {
     let mut x = 1;
-    let y = &mut x;
+    let y: &mut i32 = &mut x;
     *y += 1;
     println!("{x}");
 }
@@ -394,6 +395,92 @@ fn main() {
 }
 </pre>
 <p>In this program, the operation <code>&amp;*y</code> removes the write permission from <code>*y</code> but <em>not</em> the read permission, so <code>println!(..)</code> can read both <code>*y</code> and <code>*z</code>.</p>
+<h3 id="data-cannot-be-mutably-and-immutably-borrowed"><a class="header" href="#data-cannot-be-mutably-and-immutably-borrowed">Data Cannot Be Mutably and Immutably Borrowed</a></h3>
+<p>To borrow from a path, that path must have the appropriate permissions: <code>R</code> for an immutable reference, and <code>RW</code> for a mutable reference. A common source of borrow checker errors is trying to borrow data without enough permissions, for example:</p>
+<pre class="aquascope">
+fn main() {
+    let mut x = 1;
+    let y = &x;
+    let z = &mut x;
+    *z += 1;
+    println!("{}", y);
+}
+</pre>
+<p>If you try to compile this program, Rust will return the following error:</p>
+<pre><code class="language-text">error[E0502]: cannot borrow `x` as mutable because it is also borrowed as immutable
+ --&gt; src/main.rs:4:13
+  |
+3 |     let y = &amp;x;
+  |             -- immutable borrow occurs here
+4 |     let z = &amp;mut x;
+  |             ^^^^^^ mutable borrow occurs here
+5 |     *z += 1;
+6 |     println!(&quot;{}&quot;, y);
+  |                    - immutable borrow later used here
+</code></pre>
+<p>You can see this error reflected in the permissions. The statement <code>let y = &amp;x</code> removes write permissions from <code>x</code>. Therefore Rust finds a problem with the expression <code>&amp;mut x</code>, because <code>&amp;mut</code> requires write permissions.</p>
+<h3 id="permissions-are-returned-at-the-end-of-a-references-lifetime"><a class="header" href="#permissions-are-returned-at-the-end-of-a-references-lifetime">Permissions Are Returned At The End of a Reference's Lifetime</a></h3>
+<p>Previously, we explained that that a reference changes permissions while the reference is &quot;in use&quot;. The phrase &quot;in use&quot; is describing a reference's <strong>lifetime</strong>, which is the range of code spanning from its birth (where the reference is created) to its death (the last time(s) the reference is used).</p>
+<p>For example, in this program, the lifetime of <code>y</code> starts with <code>let y = &amp;x</code>, and ends with <code>let z = *y</code>:</p>
+<pre class="aquascope">
+fn main() {
+    let mut x = 1;
+    let y = &x;
+    let z = *y;
+    x += z;
+}
+</pre>
+<p>The read permissions on <code>x</code> are returned to <code>x</code> after the lifetime of <code>y</code> has ended, like we have seen before.</p>
+<p>In the previous examples, a lifetime has been a contiguous region of code. However, once we introduce control flow, this is not necessarily the case. For example, here is a simple function that capitalizes the first character in a vector of ASCII characters:</p>
+<pre class="aquascope">
+fn ascii_capitalize(v: &mut Vec&lt;char&gt;) {
+    let c = &v[0];
+    if c.is_ascii_lowercase() {
+        let c_up = c.to_ascii_uppercase();
+        v[0] = c_up;
+    } else {
+        println!("Already capitalized: {:?}", v);
+    }
+}
+</pre>
+<p>Note that the lifetime of the character <code>c</code> starts with <code>let c = &amp;v[0]</code>. <code>c</code> is then used in two places: the <code>if</code> condition, and the statement <code>let c_up = (...)</code>. But <code>c</code> is not used inside the <code>else</code> block.</p>
+<p>Therefore <code>c</code> has a different status in each branch. Going into the <code>if</code>-block, <code>c</code> is alive. It would be a permissions violation to mutate <code>v</code> before <code>let c_up = (...)</code>. But going into the <code>else</code>-block, <code>c</code> is dead. <code>v</code> has full permissions.</p>
+<p>In general, Rust will infer the lifetimes of references at the smallest granularity possible.</p>
+<h3 id="data-must-outlives-all-of-its-references"><a class="header" href="#data-must-outlives-all-of-its-references">Data Must Outlives All Of Its References</a></h3>
+<p>One final safety property for references is that <strong>data must outlives its references.</strong> For example, consider this function that adds a reference to a vector of references:</p>
+<pre><code class="language-rust ignore does_not_compile">fn add_ref(v: &amp;mut Vec&lt;&amp;i32&gt;, n: i32) {
+    let r = &amp;n;
+    v.push(r);
+}</code></pre>
+<p>Rust will reject this function with the following error:</p>
+<pre><code class="language-text">error[E0597]: `n` does not live long enough
+ --&gt; src/lib.rs:2:13
+  |
+1 | fn add_ref(v: &amp;mut Vec&lt;&amp;i32&gt;, n: i32) {
+  |                        - let's call the lifetime of this reference `'1`
+2 |     let r = &amp;n;
+  |             ^^ borrowed value does not live long enough
+3 |     v.push(r);
+  |     --------- argument requires that `n` is borrowed for `'1`
+4 | }
+  |  - `n` dropped here while still borrowed
+</code></pre>
+<p>The argument <code>n</code> only lives for the duration of <code>add_ref</code>. However, the reference <code>r</code> is being pushed into <code>v</code>, and <code>v</code> lives longer than <code>add_ref</code>. Therefore Rust complains that the data (<code>n</code>) does not outlive all of its references (<code>r</code>).</p>
+<p>If this function were allowed, we could call <code>add_ref</code> like this:</p>
+<pre><code class="language-rust ignore">let mut v = Vec::new();
+add_ref(&amp;mut v, 0);
+println!(&quot;{}&quot;, v[0]);</code></pre>
+<p>Then <code>v</code> would contain a reference that points to deallocated memory, and printing <code>v[0]</code> would violate memory safety.</p>
+<h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
+<p>References provide the ability to read and write data without consuming ownership of it. References are created with borrows (<code>&amp;</code> and <code>&amp;mut</code>) and used with dereferences (<code>*</code>), sometimes implicitly.</p>
+<p>However, references can be easily misused, so Rust provides a system of permissions to verify that programs use references safely:</p>
+<ul>
+<li>All variables can read, own, and (optionally) write their data.</li>
+<li>Creating a reference will transfer permissions from the borrowed path to the reference.</li>
+<li>Permissions are returned once the reference's lifetime has ended.</li>
+<li>Data must outlive all references that point to it.</li>
+</ul>
+<p>In this section, it probably feels like we've described more of what Rust <em>cannot</em> do than what Rust <em>can</em> do. That is intentional! One of Rust's core features is enabling you to use references safely but without garbage collection. Understanding these safety rules now will help you avoid frustration with the compiler down the road.</p>
 
                     </main>
 
