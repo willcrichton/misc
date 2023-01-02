@@ -8,7 +8,6 @@
 
         <!-- Custom HTML head -->
         
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -104,7 +103,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -205,7 +204,7 @@ and <em>src/lib.rs</em>, it has two crates: a binary and a library, both with th
 name as the package. A package can have multiple binary crates by placing files
 in the <em>src/bin</em> directory: each file will be a separate binary crate.</p>
 <div class="quiz-placeholder" data-quiz-name="ch07-01-packages-and-crates"  data-quiz-questions="{&quot;questions&quot;:[{&quot;context&quot;:&quot;A package is the top-level organizational unit, containing crates. A crate contains modules.\n&quot;,&quot;id&quot;:&quot;904a0808-22d1-45e5-9611-cf143babbc41&quot;,&quot;type&quot;:&quot;MultipleChoice&quot;,&quot;answer&quot;:{&quot;answer&quot;:&quot;package &gt; crate &gt; module&quot;},&quot;prompt&quot;:{&quot;distractors&quot;:[&quot;module &gt; crate &gt; package&quot;,&quot;crate &gt; package &gt; module&quot;],&quot;prompt&quot;:&quot;Which is the correct order, where \&quot;A &gt; B\&quot; means \&quot;A contains B\&quot;?\n&quot;}},{&quot;context&quot;:&quot; \n`main.rs` produces a binary crate, `lib.rs` produces a library crate, and `bin/alt.rs` produces a binary crate. The `util.rs` would presumably be used as a module within\none of these crates. `build.rs` is a build script.\n&quot;,&quot;id&quot;:&quot;d45c7cbe-6089-40b9-843c-fbb9ff48ca49&quot;,&quot;type&quot;:&quot;ShortAnswer&quot;,&quot;answer&quot;:{&quot;answer&quot;:&quot;3&quot;},&quot;prompt&quot;:{&quot;prompt&quot;:&quot;Imagine you see a Rust package `foobar` with the following files:\n\n```text\nfoobar\n├── Cargo.toml\n├── build.rs\n└── src/\n    ├── main.rs\n    ├── util.rs\n    ├── lib.rs\n    └── bin/\n        └── alt.rs\n```\n\nHow many crates does this package contain?\n&quot;}}]}"  data-quiz-fullscreen=""  data-quiz-cache-answers="" ></div>
-<script type="text/javascript" src="mdbook-quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="mdbook-quiz/lib.css">
+<script type="text/javascript" src="quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="quiz/lib.css">
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
@@ -243,13 +242,13 @@ in the <em>src/bin</em> directory: each file will be a separate binary crate.</p
         </script>
 
 
-        <script src="elasticlunr.min.js" charset="utf-8"></script>
-        <script src="mark.min.js" charset="utf-8"></script>
-        <script src="searcher.js" charset="utf-8"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="clipboard.min.js" charset="utf-8"></script>
-        <script src="highlight.js" charset="utf-8"></script>
-        <script src="book.js" charset="utf-8"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
         <script src="ferris.js"></script>

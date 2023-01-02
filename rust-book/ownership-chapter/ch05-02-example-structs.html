@@ -8,7 +8,6 @@
 
         <!-- Custom HTML head -->
         
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -104,7 +103,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -428,7 +427,7 @@ struct, because it won’t work with any other type. Let’s look at how we can
 continue to refactor this code by turning the <code>area</code> function into an <code>area</code>
 <em>method</em> defined on our <code>Rectangle</code> type.</p>
 <div class="quiz-placeholder" data-quiz-name="ch05-02-example-structs"  data-quiz-questions="{&quot;questions&quot;:[{&quot;context&quot;:&quot; \n`rect1` is moved by calling `area`, so it cannot be used on the next line.\n&quot;,&quot;id&quot;:&quot;f0ec64fa-262f-4819-8379-acad7aaf8be2&quot;,&quot;type&quot;:&quot;Tracing&quot;,&quot;answer&quot;:{&quot;doesCompile&quot;:false,&quot;lineNumber&quot;:14},&quot;prompt&quot;:{&quot;program&quot;:&quot;#[derive(Debug)]\nstruct Rectangle {\n  width: u32,\n  height: u32,\n}\n\nfn main() {\n  let rect1 = Rectangle {\n    width: 30,\n    height: 50,\n  };\n\n  let a = area(rect1);\n  println!(\&quot;{:?} {}\&quot;, rect1, a);\n}\n\nfn area(rectangle: Rectangle) -&gt; u32 {\n  rectangle.width * rectangle.height\n}\n&quot;}},{&quot;id&quot;:&quot;9ce4156e-4112-4101-a2c7-51758ceca639&quot;,&quot;type&quot;:&quot;MultipleChoice&quot;,&quot;answer&quot;:{&quot;answer&quot;:&quot;`Display` is for showing values to an end-user, while `Debug` is not&quot;},&quot;prompt&quot;:{&quot;distractors&quot;:[&quot;`Display` is for printing values to the console, while `Debug` is for viewing values in a debugger&quot;,&quot;`Display` cannot be implemented for structs, while `Debug` can be implemented for structs&quot;,&quot;There is no difference, `Display` and `Debug` are aliases for the same trait.&quot;],&quot;prompt&quot;:&quot;Which statement best describes a difference between the `Display` and `Debug` traits?&quot;}}]}"  data-quiz-fullscreen=""  data-quiz-cache-answers="" ></div>
-<script type="text/javascript" src="mdbook-quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="mdbook-quiz/lib.css">
+<script type="text/javascript" src="quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="quiz/lib.css">
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
@@ -466,13 +465,13 @@ continue to refactor this code by turning the <code>area</code> function into an
         </script>
 
 
-        <script src="elasticlunr.min.js" charset="utf-8"></script>
-        <script src="mark.min.js" charset="utf-8"></script>
-        <script src="searcher.js" charset="utf-8"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="clipboard.min.js" charset="utf-8"></script>
-        <script src="highlight.js" charset="utf-8"></script>
-        <script src="book.js" charset="utf-8"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
         <script src="ferris.js"></script>

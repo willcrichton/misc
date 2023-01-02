@@ -8,7 +8,6 @@
 
         <!-- Custom HTML head -->
         
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -104,7 +103,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -344,7 +343,7 @@ error: could not compile `variables` due to previous error
 <p>Now that we’ve explored how variables work, let’s look at more data types they
 can have.</p>
 <div class="quiz-placeholder" data-quiz-name="ch03-01-variables-and-mutability-sec3-shadowing"  data-quiz-questions="{&quot;questions&quot;:[{&quot;context&quot;:&quot;Shadowing can change the type of a variable by assigning it a new value, but it cannot change the type of a runtime value itself. That would be very dangerous!\n&quot;,&quot;id&quot;:&quot;dfcd3124-9ac3-4a54-b8f7-cf96e215f0ec&quot;,&quot;type&quot;:&quot;MultipleChoice&quot;,&quot;answer&quot;:{&quot;answer&quot;:&quot;Shadowing can change the type of a value at runtime, while mutation cannot&quot;},&quot;prompt&quot;:{&quot;distractors&quot;:[&quot;Shadowing can give a new type to an existing variable name, while mutation cannot&quot;,&quot;Shadowing only changes variable within a syntactic scope, while mutation can change an outer variable in a nested scope&quot;,&quot;Shadowing requires you to use the `let` keyword, while a mutation does not&quot;],&quot;prompt&quot;:&quot;Which statement is NOT true about the difference between shadowing and mutating a variable after it is defined?&quot;}},{&quot;context&quot;:&quot;The statement `x += 2` only affects the shadowed `x` inside the inner curly braces, not the outer `x` on line 2.\n&quot;,&quot;id&quot;:&quot;dca33d34-6294-43f4-9267-fd62d7dce993&quot;,&quot;type&quot;:&quot;Tracing&quot;,&quot;answer&quot;:{&quot;doesCompile&quot;:true,&quot;stdout&quot;:&quot;1&quot;},&quot;prompt&quot;:{&quot;program&quot;:&quot;fn main() {\n  let mut x: u32 = 1;\n  {\n    let mut x = x;\n    x += 2;\n  }\n  println!(\&quot;{x}\&quot;);\n}\n&quot;}}]}"  data-quiz-fullscreen=""  data-quiz-cache-answers="" ></div>
-<script type="text/javascript" src="mdbook-quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="mdbook-quiz/lib.css">
+<script type="text/javascript" src="quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="quiz/lib.css">
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
@@ -382,13 +381,13 @@ can have.</p>
         </script>
 
 
-        <script src="elasticlunr.min.js" charset="utf-8"></script>
-        <script src="mark.min.js" charset="utf-8"></script>
-        <script src="searcher.js" charset="utf-8"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="clipboard.min.js" charset="utf-8"></script>
-        <script src="highlight.js" charset="utf-8"></script>
-        <script src="book.js" charset="utf-8"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
         <script src="ferris.js"></script>

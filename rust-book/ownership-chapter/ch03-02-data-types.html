@@ -8,7 +8,6 @@
 
         <!-- Custom HTML head -->
         
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -104,7 +103,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -502,7 +501,7 @@ kind of error by immediately exiting instead of allowing the memory access and
 continuing. Chapter 9 discusses more of Rust’s error handling and how you can
 write readable, safe code that neither panics nor allows invalid memory access.</p>
 <div class="quiz-placeholder" data-quiz-name="ch03-02-data-types-sec2-compound"  data-quiz-questions="{&quot;questions&quot;:[{&quot;context&quot;:&quot;An array can only contain elements of a single type.\n&quot;,&quot;id&quot;:&quot;30212501-00d5-4ef6-838f-3df5112ee7ed&quot;,&quot;type&quot;:&quot;Tracing&quot;,&quot;answer&quot;:{&quot;doesCompile&quot;:false,&quot;lineNumber&quot;:3},&quot;prompt&quot;:{&quot;program&quot;:&quot;fn main() {\n  let message = \&quot;The temperature today is:\&quot;;\n  let x = [message, 100];\n  println!(\&quot;{} {}\&quot;, x[0], x[1]);\n}\n&quot;}},{&quot;context&quot;:&quot;The syntax `[x; y]` declares an array with `y` copies of the value `x`. The syntax `(a, _)` destructures `t` and binds `a` to `[1; 2]`. \nThe syntax `t.1` refers to the 1-th element of `t`, which is `[3; 4]`.\n&quot;,&quot;id&quot;:&quot;4e632a23-24cc-4c29-8935-cf6b62c3764b&quot;,&quot;type&quot;:&quot;Tracing&quot;,&quot;answer&quot;:{&quot;doesCompile&quot;:true,&quot;stdout&quot;:&quot;4&quot;},&quot;prompt&quot;:{&quot;program&quot;:&quot;fn main() {\n  let t = ([1; 2], [3; 4]);\n  let (a, _) = t;\n  println!(\&quot;{}\&quot;, a[0] + t.1[0]); \n}\n&quot;}}]}"  data-quiz-fullscreen=""  data-quiz-cache-answers="" ></div>
-<script type="text/javascript" src="mdbook-quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="mdbook-quiz/lib.css">
+<script type="text/javascript" src="quiz/lib.js"></script><link rel="stylesheet" type="text/css" href="quiz/lib.css">
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
@@ -540,13 +539,13 @@ write readable, safe code that neither panics nor allows invalid memory access.<
         </script>
 
 
-        <script src="elasticlunr.min.js" charset="utf-8"></script>
-        <script src="mark.min.js" charset="utf-8"></script>
-        <script src="searcher.js" charset="utf-8"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="clipboard.min.js" charset="utf-8"></script>
-        <script src="highlight.js" charset="utf-8"></script>
-        <script src="book.js" charset="utf-8"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
         <script src="ferris.js"></script>

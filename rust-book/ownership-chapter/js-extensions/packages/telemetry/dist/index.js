@@ -1595,7 +1595,7 @@
     }
   };
   if (typeof window !== "undefined") {
-    window.telemetry = new Telemetry("https://rust-book.willcrichton.net/logs", "224912bfd5b37c9faa228bb09d28b7cd780a62b3", "ownership-chapter");
+    window.telemetry = new Telemetry("https://rust-book.willcrichton.net/logs", "a1a1505d143c68a25e5c200a09bcbaaf0a61f5c4", "ownership-chapter");
   }
 })();
 //# sourceMappingURL=index.js.map
