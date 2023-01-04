@@ -1,0 +1,99 @@
+@Title: Extending the Rational Model of Pedagogical Reasoning
+
+%%% 
+let X = texRef("expert", "X")
+let L = texRef("learner", "L")
+let C = texRef("concept", "C")
+let h = texRef("hypothesis", "h")
+let e = texRef("evidence", "e")
+%%%
+
+# A Basic Model of Instruction
+
+Consider 
+@Definition[name: "expert"]{an expert $#X$ (e.g. Will)} 
+and 
+@Definition[name: "learner"]{a learner $#L$ (e.g. a Rust Book reader)}. 
+@Definition[name: "concept"]{The expert is trying to teach a concept $#C$ (e.g. how enums works in Rust).} 
+@Definition[name: "evidence"]{The expert generates an explanation $#e$}, 
+and 
+@Definition[name: "hypothesis"]{the reader reads $#e$ to infer a mental model (or hypothesis) $#h$ about the concept.}
+The expert wants the reader to infer a correct hypothesis $#h _{#C}$.
+
+The expert's criterion for selecting $#e$ can be modeled as an optimization over a probability space:
+
+% let argmax = macro{\mathop{\underset{#1}{\mathsf{argmax}}}}
+% let author = macro{#texRef{author}{\mathsf{author}(#1)}}
+
+@Definition[name: "author"]:
+  $$
+  #author{#h _{#C}} = #argmax{#e} P_{#X}(#h _{#C} \mid #e)
+  $$
+
+That is, the expert picks the explanation $#e$ that maximizes the probability of inferring $#h _{#C}$ given $#e$. Similarly, the reader's process for learning from $#e$ can be modeled like this:
+
+% let learn = macro{#texRef{learn}{\mathsf{learn}(#1)}}
+
+@Definition[name: "learn"]:
+  $$
+  #learn{#e} = #argmax{#h} P_{#L}(#h \mid #e)
+  $$
+
+The reader selects the most likely hypothesis $#h$ given the explanation $#e$. 
+
+# A Model of Improving Instruction through Quizzes
+
+Note that the expert has a hypothetical model of learning $P_{#X}$, and the learner has an actual model of learning $P_{#L}$. If these are a different, then it's possible that $#learn{#author{#h _{#C}}} \neq # h _{#C}$.
+
+Therefore one goal is to minimize the distance between $P_{#X}$ and $P_{#L}$, i.e. $\mathsf{dist}(P_{#X} || P_{#L})$. If we knew the learner's inferred hypothesis $#h$, then roughly this minimization process would be to increase the probability of $#h$ given $#e$ under $P_{#X}$. Then subsequent iterations of $#author{#h _{#C}}$ would be less likely to generate $#e$.
+
+However, We cannot directly observe the learner's inferred hypothesis $#h$, but we can observe traces of the hypothesis through quizzes. Given a question $q$ with answers $\vec{a}$, a person selects an answer by this model:
+
+% let answer = macro{#texRef{answer}{\mathsf{answer}_{#1}(#2)}}
+% let answers = macro{#texRef{answers}{#1 \mathop{\mathsf{is}\text{-}\mathsf{answer}\text{-}\mathsf{to}} #2}}
+
+@Definition[name: "answer"]:
+  $$
+  #answer{M}{q, \vec{a}, #h} = #argmax{i} P_M(#answers{a_i}{q} \mid #h)
+  $$
+
+Given a belief $#h$, the person selects the most likely answer $a_i$ (@Definition[name:"answers"]{using the shorthand $#answers{a_i}{q}$ for $a_i$ is the correct answer to $q$}).
+
+An expert then writes quiz questions such that only readers with the correct mental model will answer correctly, modeled as:
+
+% let buildquiz = macro{#texRef{build-quiz}{\mathsf{build}\text{-}{\mathsf{quiz}({#1})}}}
+
+@Definition[name: "build-quiz"]:
+  $$
+  #buildquiz{#h _{#C}} = #argmax{(q, \vec{a})} \left[#answers{#answer{#X}{q, \vec{a}, #h _{#C}}}{q}\right]
+  $$
+
+That is, questions where the most likely answer is the correct answer when the learner has the correct mental model $#h _{#C}$. Note that this model is based on $P_{#X}$, while the learner will actually answer based on $P_{#L}$.
+
+After observing an answer $i$ from the learner, then the expert can infer the learner's true hypothesis as:
+
+% let inventory = macro{#texRef{inventory}{\mathsf{inventory}(#1)}}
+
+@Definition[name: "inventory"]:
+  $$
+  #inventory{q, \vec{a}, i} = #argmax{#h}\left[i = #answer{#X}{q, \vec{a}, #h} \right]
+  $$
+
+# Incorrect Models from Sub-rational Explanations
+
+An alternative explanation of why a learner acquires an incorrect mental model is because the author did not fully ("rationally") generate an explanation according to these models. For example, recall the definition of authoring:
+
+$$
+#author{#h _{#C}} = #argmax{#e} P_{#X}(#h _{#C} \mid #e)
+$$
+
+If the expert did not consider all possible explanations $#e$, then they might select a sub-optimal explanation --- a local maximum, not a global maximum in the probability space. We could investigate which explanations an expert might not consider. We could investigate how to prompt experts (via principles, via automated tooling) to consider a wider explanation space.
+
+Another possibility is that the learner did not consider all possible hypotheses $#h$ in their process:
+
+$$
+#learn{#e} = #argmax{#h} P_{#L}(#h \mid #e)
+$$
+
+A learner will likely generate a small number of hypotheses based on any number of cognitive biases. Understanding those biases can improve how the expert generates the explanation $#e$ to overcome the biases.
+
