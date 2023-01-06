@@ -6,6 +6,7 @@ let L = texRef("learner", "L")
 let C = texRef("concept", "C")
 let h = texRef("hypothesis", "h")
 let e = texRef("evidence", "e")
+let hc = macro{#h _{#C}}()
 %%%
 
 # A Basic Model of Instruction
@@ -100,40 +101,54 @@ A learner will likely generate a small number of hypotheses based on any number 
 
 # Explaining Rust, Specifically
 
-Let the universe of hypotheses $H$ be all semantic models of Rust syntax. Then $h_C \in H$ is the true semantic model of Rust. Let the universe of explanations $E$ be all pairs $(i, h_C(i))$ of Rust programs and outputs (either a compiler error or an execution trace). Recall the definition of authoring:
+%%% 
+let H = texRef("hypotheses", "H");
+let E = texRef("explanations", "E");
+%%%
+
+.@Definition[name: "hypotheses"]: Let the universe of hypotheses $#H$ be all semantic models of Rust syntax. 
+Then $#hc \in #H$ is the true semantic model of Rust. 
+@Definition[name: "explanations"]: Let the universe of explanations $#E$ be all pairs $(i, #hc(i))$ of Rust programs and outputs (either a compiler error or an execution trace). 
+Recall the definition of authoring:
 
 $$
-#author{#h _{#C}} = #argmax{#e} P_{#X}(#h _{#C} \mid #e)
+#author{#hc} = #argmax{#e} P_{#X}(#hc \mid #e)
 $$
 
-How does an author select the best $e \in E$ to explain $h_C$? First, we need to define a probability distribution $P(h \mid e)$, i.e. the probability of a particular semantics given an example. Applying Bayes' rule:
+How does an author select the best $#e \in #E$ to explain $#hc$? First, we need to define a probability distribution $P(#h \mid #e)$, i.e. the probability of a particular semantics given an example. Applying Bayes' rule:
 
 $$
-P(h \mid e) \propto P(e \mid h)P(h)
+P(#h \mid #e) \propto P(#e \mid #h)P(#h)
 $$
 
-The probabiltity $P((i, o) \mid h)$ is simply $I[h(i) = o]$, i.e. whether the input/output pair is consistent with $h$. $P(h)$ is the prior probability of $h$. 
+The probabiltity $P((i, o) \mid #h)$ is simply $I[h(i) = o]$, i.e. whether the input/output pair is consistent with $#h$. $P(#h)$ is the prior probability of $#h$. 
 
-A trivial strategy to maximize $P(h \mid e)$ is to select an input $i$ such that only $h_C$ is consistent with $i$, and no other possible hypothesis. However, the space of possible misunderstanding is large, and such an $e$ would probably consist mostly of edge cases against each misconception. We would also like to minimize the size of $e$, balanced against the maximization of $P(h \mid e)$.
+A trivial strategy to maximize $P(#h \mid #e)$ is to select an input $i$ such that only $#hc$ is consistent with $i$, and no other possible hypothesis. However, the space of possible misunderstanding is large, and such an $#e$ would probably consist mostly of edge cases against each misconception. We would also like to minimize the size of $#e$, balanced against the maximization of $P(#h \mid #e)$.
 
-For a given $e$, let $H_M(e)$ be the set of misconceptions consistent with $e$:
+% let hm = texRef("hm", "H_M")
 
-$$
-H_M((i, o)) = \{h \in H \mid h(i) = o \wedge h \neq h_C\}
-$$
+@Definition[name: "hm"]:
+  &nbsp; For a given $e$, let $#hm(e)$ be the set of misconceptions consistent with $e$:
+
+  $$
+  #hm((i, o)) = \{#h \in #H \mid #h(i) = o \wedge #h \neq #hc\}
+  $$
 
 Then our goal can be rewritten as:
 
+% let a = texRef("a", "\alpha");
+
 $$
-\mathsf{author}(h_C) = #argmin{e} \left[ |e|^\alpha * \sum_{h \in H_M(e)} P(h)\right]
+\mathsf{author}(#hc) = #argmin{#e} \left[ |#e|^{#a} * \sum_{#h \in #hm(#e)} P(#h)\right]
 $$
 
-Where $\alpha$ is a parameter that represents an author's tolerance to longer examples. That is, the optimal example $e$ balances being small and minimizing the prior probability of incorrect consistent hypotheses.
+.@Definition[name: "a"]: Where $#a$ is a parameter that represents an author's tolerance to longer examples. 
+That is, the optimal example $#e$ balances being small and minimizing the prior probability of incorrect consistent hypotheses.
 
-The challenge is to define $P(h)$, the prior probability of a hypothesis. When a learner considers two hypotheses consistent with the explanation, which do they pick? Here are a few criterion we might expect learners to use:
+The challenge is to define $P(#h)$, the prior probability of a hypothesis. When a learner considers two hypotheses consistent with the explanation, which do they pick? Here are a few criterion we might expect learners to use:
 
-* **Parsimony:** a language would probably be designed around simpler rules than more complex rules, so a simpler $h$ is preferred over a more complex $h$.
-* **Similarity to other languages**: a person would expect a programming language to be designed similar to languages they have seen before, so they prefer an $h$ similar to an $h'$ they hold about another known language.
+* **Parsimony:** a language would probably be designed around simpler rules than more complex rules, so a simpler $#h$ is preferred over a more complex $#h$.
+* **Similarity to other languages**: a person would expect a programming language to be designed similar to languages they have seen before, so they prefer an $#h$ similar to an $#h'$ they hold about another known language.
 * What else? Thinking of Chi, Feltovich, Glaser '81: novices prefer explanations in terms of surface syntax, while experts prefer deeper explanations.
 
-If we can computationally define $H_M(e)$ and $P(H)$, then can automatically generate good examples to explain concepts!
+If we can computationally define $#hm(#e)$ and $P(#H)$, then can automatically generate good examples to explain concepts!
