@@ -7761,7 +7761,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState(initialState) {
+          function useState2(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -8561,7 +8561,7 @@
           exports.useMemo = useMemo;
           exports.useReducer = useReducer;
           exports.useRef = useRef2;
-          exports.useState = useState;
+          exports.useState = useState2;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -33452,7 +33452,7 @@
           function basicStateReducer(state, action) {
             return typeof action === "function" ? action(state) : action;
           }
-          function useState(initialState) {
+          function useState2(initialState) {
             {
               currentHookNameInDev = "useState";
             }
@@ -33633,7 +33633,7 @@
             useMemo,
             useReducer,
             useRef: useRef2,
-            useState,
+            useState: useState2,
             useInsertionEffect: noop,
             useLayoutEffect,
             useCallback,
@@ -38671,7 +38671,7 @@
           function basicStateReducer(state, action) {
             return typeof action === "function" ? action(state) : action;
           }
-          function useState(initialState) {
+          function useState2(initialState) {
             {
               currentHookNameInDev = "useState";
             }
@@ -38852,7 +38852,7 @@
             useMemo,
             useReducer,
             useRef: useRef2,
-            useState,
+            useState: useState2,
             useInsertionEffect: noop,
             useLayoutEffect,
             useCallback,
@@ -43189,7 +43189,7 @@
     tokenPrec: 15596
   });
 
-  // ../../node_modules/.pnpm/@codemirror+state@6.1.4/node_modules/@codemirror/state/dist/index.js
+  // ../../node_modules/.pnpm/@codemirror+state@6.2.0/node_modules/@codemirror/state/dist/index.js
   var Text = class {
     constructor() {
     }
@@ -44299,9 +44299,9 @@
     static cursor(pos, assoc = 0, bidiLevel, goalColumn) {
       return SelectionRange.create(pos, pos, (assoc == 0 ? 0 : assoc < 0 ? 4 : 8) | (bidiLevel == null ? 3 : Math.min(2, bidiLevel)) | (goalColumn !== null && goalColumn !== void 0 ? goalColumn : 33554431) << 5);
     }
-    static range(anchor, head, goalColumn) {
-      let goal = (goalColumn !== null && goalColumn !== void 0 ? goalColumn : 33554431) << 5;
-      return head < anchor ? SelectionRange.create(head, anchor, 16 | goal | 8) : SelectionRange.create(anchor, head, goal | (head > anchor ? 4 : 0));
+    static range(anchor, head, goalColumn, bidiLevel) {
+      let flags = (goalColumn !== null && goalColumn !== void 0 ? goalColumn : 33554431) << 5 | (bidiLevel == null ? 3 : Math.min(2, bidiLevel));
+      return head < anchor ? SelectionRange.create(head, anchor, 16 | 8 | flags) : SelectionRange.create(anchor, head, (head > anchor ? 4 : 0) | flags);
     }
     static normalized(ranges, mainIndex = 0) {
       let main = ranges[mainIndex];
@@ -46081,7 +46081,7 @@
     return name2;
   }
 
-  // ../../node_modules/.pnpm/@codemirror+view@6.7.0/node_modules/@codemirror/view/dist/index.js
+  // ../../node_modules/.pnpm/@codemirror+view@6.7.1/node_modules/@codemirror/view/dist/index.js
   function getSelection(root) {
     let target;
     if (root.nodeType == 11) {
@@ -46251,6 +46251,23 @@
         break;
       }
     }
+  }
+  function scrollableParent(dom) {
+    let doc2 = dom.ownerDocument;
+    for (let cur = dom.parentNode; cur; ) {
+      if (cur == doc2.body) {
+        break;
+      } else if (cur.nodeType == 1) {
+        if (cur.scrollHeight > cur.clientHeight || cur.scrollWidth > cur.clientWidth)
+          return cur;
+        cur = cur.assignedSlot || cur.parentNode;
+      } else if (cur.nodeType == 11) {
+        cur = cur.host;
+      } else {
+        break;
+      }
+    }
+    return null;
   }
   var DOMSelectionState = class {
     constructor() {
@@ -49049,22 +49066,30 @@
       this.compositionFirstChange = null;
       this.compositionEndedAt = 0;
       this.mouseSelection = null;
+      let handleEvent = (handler, event) => {
+        if (this.ignoreDuringComposition(event))
+          return;
+        if (event.type == "keydown" && this.keydown(view, event))
+          return;
+        if (this.mustFlushObserver(event))
+          view.observer.forceFlush();
+        if (this.runCustomHandlers(event.type, view, event))
+          event.preventDefault();
+        else
+          handler(view, event);
+      };
       for (let type in handlers) {
         let handler = handlers[type];
         view.contentDOM.addEventListener(type, (event) => {
-          if (!eventBelongsToEditor(view, event) || this.ignoreDuringComposition(event))
-            return;
-          if (type == "keydown" && this.keydown(view, event))
-            return;
-          if (this.mustFlushObserver(event))
-            view.observer.forceFlush();
-          if (this.runCustomHandlers(type, view, event))
-            event.preventDefault();
-          else
-            handler(view, event);
+          if (eventBelongsToEditor(view, event))
+            handleEvent(handler, event);
         }, handlerOptions[type]);
         this.registeredEvents.push(type);
       }
+      view.scrollDOM.addEventListener("mousedown", (event) => {
+        if (event.target == view.scrollDOM)
+          handleEvent(handlers.mousedown, event);
+      });
       if (browser.chrome && browser.chrome_version == 102) {
         view.scrollDOM.addEventListener("wheel", () => {
           if (this.chromeScrollHack < 0)
@@ -49193,12 +49218,18 @@
   ];
   var EmacsyPendingKeys = "dthko";
   var modifierCodes = [16, 17, 18, 20, 91, 92, 224, 225];
+  function dragScrollSpeed(dist) {
+    return dist * 0.7 + 8;
+  }
   var MouseSelection = class {
     constructor(view, startEvent, style, mustSelect) {
       this.view = view;
       this.style = style;
       this.mustSelect = mustSelect;
+      this.scrollSpeed = { x: 0, y: 0 };
+      this.scrolling = -1;
       this.lastEvent = startEvent;
+      this.scrollParent = scrollableParent(view.contentDOM);
       let doc2 = view.contentDOM.ownerDocument;
       doc2.addEventListener("mousemove", this.move = this.move.bind(this));
       doc2.addEventListener("mouseup", this.up = this.up.bind(this));
@@ -49212,11 +49243,23 @@
       }
     }
     move(event) {
+      var _a2;
       if (event.buttons == 0)
         return this.destroy();
       if (this.dragging !== false)
         return;
       this.select(this.lastEvent = event);
+      let sx = 0, sy = 0;
+      let rect = ((_a2 = this.scrollParent) === null || _a2 === void 0 ? void 0 : _a2.getBoundingClientRect()) || { left: 0, top: 0, right: this.view.win.innerWidth, bottom: this.view.win.innerHeight };
+      if (event.clientX <= rect.left)
+        sx = -dragScrollSpeed(rect.left - event.clientX);
+      else if (event.clientX >= rect.right)
+        sx = dragScrollSpeed(event.clientX - rect.right);
+      if (event.clientY <= rect.top)
+        sy = -dragScrollSpeed(rect.top - event.clientY);
+      else if (event.clientY >= rect.bottom)
+        sy = dragScrollSpeed(event.clientY - rect.bottom);
+      this.setScrollSpeed(sx, sy);
     }
     up(event) {
       if (this.dragging == null)
@@ -49226,18 +49269,38 @@
       this.destroy();
     }
     destroy() {
+      this.setScrollSpeed(0, 0);
       let doc2 = this.view.contentDOM.ownerDocument;
       doc2.removeEventListener("mousemove", this.move);
       doc2.removeEventListener("mouseup", this.up);
       this.view.inputState.mouseSelection = null;
+    }
+    setScrollSpeed(sx, sy) {
+      this.scrollSpeed = { x: sx, y: sy };
+      if (sx || sy) {
+        if (this.scrolling < 0)
+          this.scrolling = setInterval(() => this.scroll(), 50);
+      } else if (this.scrolling > -1) {
+        clearInterval(this.scrolling);
+        this.scrolling = -1;
+      }
+    }
+    scroll() {
+      if (this.scrollParent) {
+        this.scrollParent.scrollLeft += this.scrollSpeed.x;
+        this.scrollParent.scrollTop += this.scrollSpeed.y;
+      } else {
+        this.view.win.scrollBy(this.scrollSpeed.x, this.scrollSpeed.y);
+      }
+      if (this.dragging === false)
+        this.select(this.lastEvent);
     }
     select(event) {
       let selection = this.style.get(event, this.extend, this.multiple);
       if (this.mustSelect || !selection.eq(this.view.state.selection) || selection.main.assoc != this.view.state.selection.main.assoc)
         this.view.dispatch({
           selection,
-          userEvent: "select.pointer",
-          scrollIntoView: true
+          userEvent: "select.pointer"
         });
       this.mustSelect = false;
     }
@@ -49415,23 +49478,15 @@
   function basicMouseSelection(view, event) {
     let start = queryPos(view, event), type = getClickType(event);
     let startSel = view.state.selection;
-    let last = start, lastEvent = event;
     return {
       update(update) {
         if (update.docChanged) {
           start.pos = update.changes.mapPos(start.pos);
           startSel = startSel.map(update.changes);
-          lastEvent = null;
         }
       },
       get(event2, extend2, multiple) {
-        let cur;
-        if (lastEvent && event2.clientX == lastEvent.clientX && event2.clientY == lastEvent.clientY)
-          cur = last;
-        else {
-          cur = last = queryPos(view, event2);
-          lastEvent = event2;
-        }
+        let cur = queryPos(view, event2);
         let range = rangeForClick(view, cur.pos, cur.bias, type);
         if (start.pos != cur.pos && !extend2) {
           let startRange = rangeForClick(view, start.pos, start.bias, type);
@@ -53278,7 +53333,7 @@
   GutterMarker.prototype.startSide = GutterMarker.prototype.endSide = -1;
   GutterMarker.prototype.point = true;
 
-  // ../../node_modules/.pnpm/@codemirror+language@6.3.1/node_modules/@codemirror/language/dist/index.js
+  // ../../node_modules/.pnpm/@codemirror+language@6.3.2/node_modules/@codemirror/language/dist/index.js
   var _a;
   var languageDataProp = /* @__PURE__ */ new NodeProp();
   function defineLanguageFacet(baseData) {
@@ -53984,7 +54039,7 @@
   var defaultHighlightStyle = /* @__PURE__ */ HighlightStyle.define([
     {
       tag: tags.meta,
-      color: "#7a757a"
+      color: "#404740"
     },
     {
       tag: tags.link,
@@ -54234,66 +54289,189 @@
       __defProp2(target, name2, { get: all[name2], enumerable: true });
   };
   var DEBUG = false;
+  var ConfigContext = import_react.default.createContext({});
   var CodeContext = import_react.default.createContext("");
-  var intersperse = (arr, sep) => {
-    let outp = [];
-    for (let i = 0; i < arr.length; ++i) {
-      outp.push(arr[i]);
-      if (i != arr.length - 1) {
-        outp.push(sep);
-      }
-    }
-    return outp;
+  var PathContext = import_react.default.createContext([]);
+  var codeRange = (code, range) => {
+    return code.slice(range.char_start, range.char_end);
   };
-  var AbbreviatedView = ({ value }) => value.type == "All" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, intersperse(
-    value.value.map((el, i) => /* @__PURE__ */ import_react.default.createElement(ValueView, {
+  var AbbreviatedView = ({ value }) => {
+    let pathCtx = (0, import_react.useContext)(PathContext);
+    let IndexedContainer = ({ children, index }) => {
+      let path = [...pathCtx, "index", index.toString()];
+      return /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+        value: path
+      }, /* @__PURE__ */ import_react.default.createElement("td", {
+        className: path.join("-"),
+        "data-connector": "bottom"
+      }, children));
+    };
+    return /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, /* @__PURE__ */ import_react.default.createElement("tr", null, value.type == "All" ? value.value.map((el, i) => /* @__PURE__ */ import_react.default.createElement(IndexedContainer, {
       key: i,
+      index: i
+    }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
       value: el
-    })),
-    /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, ",")
-  )) : /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, intersperse(
-    value.value[0].map((el, i) => /* @__PURE__ */ import_react.default.createElement(ValueView, {
+    }))) : /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.value[0].map((el, i) => /* @__PURE__ */ import_react.default.createElement(IndexedContainer, {
       key: i,
+      index: i
+    }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
       value: el
-    })),
-    /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, ",")
-  ), ",...,", /* @__PURE__ */ import_react.default.createElement(ValueView, {
-    value: value.value[1]
-  }));
-  var ValueView = ({ value }) => /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.type == "Bool" || value.type == "Char" || value.type == "Uint" || value.type == "Int" || value.type == "Float" || value.type == "String" ? value.value.toString() : value.type == "Struct" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.value.name, /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, value.value.fields.map(([k, v]) => /* @__PURE__ */ import_react.default.createElement("tr", {
-    key: k
-  }, /* @__PURE__ */ import_react.default.createElement("td", null, k), /* @__PURE__ */ import_react.default.createElement("td", null, /* @__PURE__ */ import_react.default.createElement(ValueView, {
-    value: v
-  }))))))) : value.type == "Enum" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.value.name, " (", value.value.variant, ")", /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, value.value.fields.map(([k, v]) => /* @__PURE__ */ import_react.default.createElement("tr", {
-    key: k
-  }, /* @__PURE__ */ import_react.default.createElement("td", null, k), /* @__PURE__ */ import_react.default.createElement("td", null, /* @__PURE__ */ import_react.default.createElement(ValueView, {
-    value: v
-  }))))))) : value.type == "Pointer" ? (() => {
-    let ptr = value.value;
-    let pointTo = ptr.type == "Heap" ? `.heap-${ptr.value.index}` : `.stack-${ptr.value.frame}-${ptr.value.local}`;
-    return /* @__PURE__ */ import_react.default.createElement("span", {
-      className: "pointer",
-      "data-point-to": pointTo
-    }, "\u25CF");
-  })() : value.type == "Array" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "[", /* @__PURE__ */ import_react.default.createElement(AbbreviatedView, {
-    value: value.value
-  }), "]") : value.type == "Unallocated" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "X") : /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "TODO"));
+    }))), /* @__PURE__ */ import_react.default.createElement("td", null, "..."), /* @__PURE__ */ import_react.default.createElement(IndexedContainer, {
+      index: 100
+    }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+      value: value.value[1]
+    }))))));
+  };
+  var StructView = ({ value }) => {
+    let pathCtx = (0, import_react.useContext)(PathContext);
+    let configCtx = (0, import_react.useContext)(ConfigContext);
+    if (value.alloc_kind !== null && !configCtx.concreteTypes) {
+      let alloc_type = value.alloc_kind.type;
+      let read_field = (v, k) => {
+        let field = v.fields.find(([k2]) => k == k2);
+        if (!field) {
+          let v_pretty = JSON.stringify(v, void 0, 2);
+          throw new Error(`Could not find field "${k}" in struct: ${v_pretty}`);
+        }
+        return field[1].value;
+      };
+      let read_unique = (unique) => {
+        let non_null2 = read_field(unique, "pointer");
+        return non_null2;
+      };
+      let read_vec = (vec) => {
+        let raw_vec = read_field(vec, "buf");
+        let unique = read_field(raw_vec, "ptr");
+        return read_unique(unique);
+      };
+      let non_null;
+      if (alloc_type == "String") {
+        let vec = read_field(value, "vec");
+        non_null = read_vec(vec);
+      } else if (alloc_type == "Vec") {
+        non_null = read_vec(value);
+      } else if (alloc_type == "Box") {
+        let unique = read_field(value, "0");
+        non_null = read_unique(unique);
+      } else {
+        throw new Error(`Unimplemented alloc type: ${alloc_type}`);
+      }
+      let ptr = non_null.fields[0][1];
+      return /* @__PURE__ */ import_react.default.createElement(ValueView, {
+        value: ptr
+      });
+    }
+    if (value.fields.length == 1) {
+      let path = [...pathCtx, "field", "0"];
+      return /* @__PURE__ */ import_react.default.createElement("div", {
+        className: path.join("-")
+      }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+        value: path
+      }, value.name, " /\xA0", /* @__PURE__ */ import_react.default.createElement(ValueView, {
+        value: value.fields[0][1]
+      })));
+    }
+    return /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.name, /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, value.fields.map(([k, v], i) => {
+      let path = [...pathCtx, "field", i.toString()];
+      return /* @__PURE__ */ import_react.default.createElement("tr", {
+        key: k
+      }, /* @__PURE__ */ import_react.default.createElement("td", null, k), /* @__PURE__ */ import_react.default.createElement("td", {
+        className: path.join("-")
+      }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+        value: path
+      }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+        value: v
+      }))));
+    }))));
+  };
+  var ValueView = ({ value }) => {
+    let pathCtx = (0, import_react.useContext)(PathContext);
+    return /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.type == "Bool" || value.type == "Uint" || value.type == "Int" || value.type == "Float" ? value.value.toString() : value.type == "Char" ? String.fromCharCode(value.value).replace(" ", "\xA0") : value.type == "Tuple" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, /* @__PURE__ */ import_react.default.createElement("tr", null, value.value.map((v, i) => {
+      let path = [...pathCtx, "field", i.toString()];
+      return /* @__PURE__ */ import_react.default.createElement("td", {
+        key: i,
+        className: path.join("-")
+      }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+        value: path
+      }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+        value: v
+      })));
+    }))))) : value.type == "Struct" ? /* @__PURE__ */ import_react.default.createElement(StructView, {
+      value: value.value
+    }) : value.type == "Enum" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, value.value.name, " (", value.value.variant, ")", /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, value.value.fields.map(([k, v], i) => {
+      let path = [...pathCtx, "field", i.toString()];
+      return /* @__PURE__ */ import_react.default.createElement("tr", {
+        key: k
+      }, /* @__PURE__ */ import_react.default.createElement("td", null, k), /* @__PURE__ */ import_react.default.createElement("td", {
+        className: path.join("-")
+      }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+        value: path
+      }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+        value: v
+      }))));
+    })))) : value.type == "Pointer" ? (() => {
+      let ptr = value.value;
+      let segment = ptr.segment.type == "Heap" ? `heap-${ptr.segment.value.index}` : `stack-${ptr.segment.value.frame}-${ptr.segment.value.local}`;
+      let parts = [...ptr.parts];
+      let lastPart = import_lodash2.default.last(parts);
+      let slice = lastPart && lastPart.type == "Subslice" ? lastPart.value : void 0;
+      if (lastPart && lastPart.type == "Index" && lastPart.value == 0)
+        parts.pop();
+      let partClass = parts.map(
+        (part) => part.type == "Index" ? `index-${part.value}` : part.type == "Field" ? `field-${part.value}` : part.type == "Subslice" ? `index-${part.value[0]}` : ""
+      );
+      let attrs = {
+        ["data-point-to"]: [segment, ...partClass].join("-")
+      };
+      if (slice) {
+        attrs["data-point-to-range"] = [
+          segment,
+          ...partClass.slice(0, -1),
+          `index-${slice[1]}`
+        ].join("-");
+      }
+      return /* @__PURE__ */ import_react.default.createElement("span", {
+        className: "pointer",
+        ...attrs
+      }, "\u25CF");
+    })() : value.type == "Array" ? /* @__PURE__ */ import_react.default.createElement(AbbreviatedView, {
+      value: value.value
+    }) : value.type == "Unallocated" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "X") : /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "TODO"));
+  };
   var LocalsView = ({
     index,
     locals
-  }) => /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, locals.map(([key, value], i) => /* @__PURE__ */ import_react.default.createElement("tr", {
-    key: i
-  }, /* @__PURE__ */ import_react.default.createElement("td", null, key), /* @__PURE__ */ import_react.default.createElement("td", {
-    className: `stack-${index}-${key}`
-  }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
-    value
-  }))))));
+  }) => locals.length == 0 ? /* @__PURE__ */ import_react.default.createElement("div", {
+    className: "empty-frame"
+  }, "(empty frame)") : /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, locals.map(([key, value], i) => {
+    let path = ["stack", index.toString(), key];
+    return /* @__PURE__ */ import_react.default.createElement("tr", {
+      key: i
+    }, /* @__PURE__ */ import_react.default.createElement("td", null, key), /* @__PURE__ */ import_react.default.createElement("td", {
+      className: path.join("-"),
+      "data-connector": "right"
+    }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+      value: path
+    }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+      value
+    }))));
+  })));
+  var Header = ({
+    children,
+    className
+  }) => /* @__PURE__ */ import_react.default.createElement("div", {
+    className: `header ${className || ""}`
+  }, /* @__PURE__ */ import_react.default.createElement("div", {
+    className: "header-text"
+  }, children), /* @__PURE__ */ import_react.default.createElement("div", {
+    className: "header-bg"
+  }));
   var FrameView = ({ index, frame }) => {
     let code = (0, import_react.useContext)(CodeContext);
-    let snippet = code.slice(frame.location.char_start, frame.location.char_end);
+    let snippet = codeRange(code, frame.location);
     return /* @__PURE__ */ import_react.default.createElement("div", {
       className: "frame"
-    }, /* @__PURE__ */ import_react.default.createElement("div", {
+    }, /* @__PURE__ */ import_react.default.createElement(Header, {
       className: "frame-header"
     }, frame.name), DEBUG ? /* @__PURE__ */ import_react.default.createElement("pre", null, snippet) : null, /* @__PURE__ */ import_react.default.createElement(LocalsView, {
       index,
@@ -54302,7 +54480,7 @@
   };
   var StackView = ({ stack }) => /* @__PURE__ */ import_react.default.createElement("div", {
     className: "memory stack"
-  }, /* @__PURE__ */ import_react.default.createElement("div", {
+  }, /* @__PURE__ */ import_react.default.createElement(Header, {
     className: "memory-header"
   }, "Stack"), /* @__PURE__ */ import_react.default.createElement("div", {
     className: "frames"
@@ -54313,38 +54491,80 @@
   }))));
   var HeapView = ({ heap }) => /* @__PURE__ */ import_react.default.createElement("div", {
     className: "memory heap"
-  }, /* @__PURE__ */ import_react.default.createElement("div", {
+  }, /* @__PURE__ */ import_react.default.createElement(Header, {
     className: "memory-header"
-  }, "Heap"), /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, heap.locations.map((value, i) => /* @__PURE__ */ import_react.default.createElement("tr", {
-    key: i
-  }, /* @__PURE__ */ import_react.default.createElement("td", {
-    className: `heap-${i}`
-  }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
-    value
-  })))))));
-  var StepView = ({ step, index }) => {
+  }, "Heap"), /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, heap.locations.map((value, i) => {
+    let path = ["heap", i.toString()];
+    return /* @__PURE__ */ import_react.default.createElement("tr", {
+      key: i
+    }, /* @__PURE__ */ import_react.default.createElement("td", {
+      className: path.join("-"),
+      "data-connector": "left"
+    }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
+      value: path
+    }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
+      value
+    }))));
+  }))));
+  import_leader_line_new.default.positionByWindowResize = false;
+  var StepView = ({
+    container,
+    step,
+    index
+  }) => {
     let ref = (0, import_react.useRef)(null);
+    let configCtx = (0, import_react.useContext)(ConfigContext);
     (0, import_react.useEffect)(() => {
-      let container = ref.current;
-      let pointers = container.querySelectorAll(".pointer");
-      let lines = Array.from(pointers).map((src) => {
-        let dstSel = src.dataset.pointTo;
-        let dst = container.querySelector(dstSel);
+      let stepContainer = ref.current;
+      let query = (sel) => {
+        let dst = stepContainer.querySelector("." + sel);
         if (!dst)
-          throw new Error(
-            `Could not find endpoint for pointer selector: ${dstSel}`
-          );
-        let endSocket = dstSel.startsWith(".stack") ? "right" : "left";
-        return new import_leader_line_new.default(src, dst, {
-          color: "black",
-          size: 1,
-          endPlugSize: 2,
-          startSocket: "right",
-          endSocket
-        });
-      });
-      return () => lines.forEach((line) => line.remove());
-    }, []);
+          throw new Error(`Could not find endpoint for pointer selector: ${sel}`);
+        return dst;
+      };
+      let pointers = stepContainer.querySelectorAll(".pointer");
+      let color = getComputedStyle(document.body).getPropertyValue("--fg") ? "var(--fg)" : "black";
+      let lines = Array.from(pointers).map((src) => {
+        try {
+          let dstSel = src.dataset.pointTo;
+          let dst = query(dstSel);
+          let dstRange = src.dataset.pointToRange ? query(src.dataset.pointToRange) : void 0;
+          let endSocket = dst.dataset.connector;
+          let dstAnchor = dstRange ? import_leader_line_new.default.areaAnchor(dst, {
+            shape: "rect",
+            width: dstRange.offsetLeft + dst.offsetWidth - dst.offsetLeft,
+            height: 2,
+            y: "100%",
+            fillColor: "red"
+          }) : dstSel.startsWith("stack") ? import_leader_line_new.default.pointAnchor(dst, { x: "100%", y: "75%" }) : dst;
+          let line = new import_leader_line_new.default(src, dstAnchor, {
+            color,
+            size: 1,
+            endPlugSize: 2,
+            startSocket: "right",
+            endSocket
+          });
+          return line;
+        } catch (e) {
+          console.error("Leader line failed to render", e.stack);
+          return void 0;
+        }
+      }).filter((l) => l);
+      let reposition = () => lines.forEach((line) => line.position());
+      let lastPos = stepContainer.getBoundingClientRect();
+      let interval = setInterval(() => {
+        let curPos = stepContainer.getBoundingClientRect();
+        if (curPos.x != lastPos.x || curPos.y != lastPos.y)
+          reposition();
+        lastPos = curPos;
+      }, 300);
+      let timeout = setTimeout(() => reposition(), 300);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+        lines.forEach((line) => line.remove());
+      };
+    }, [configCtx.concreteTypes]);
     return /* @__PURE__ */ import_react.default.createElement("div", {
       className: "step"
     }, /* @__PURE__ */ import_react.default.createElement("div", {
@@ -54359,6 +54579,37 @@
     }), step.heap.locations.length > 0 ? /* @__PURE__ */ import_react.default.createElement(HeapView, {
       heap: step.heap
     }) : null));
+  };
+  var InterpreterView = ({
+    steps,
+    config
+  }) => {
+    let ref = (0, import_react.useRef)(null);
+    let [concreteTypes, setConcreteTypes] = (0, import_react.useState)(
+      config.concreteTypes || false
+    );
+    let [buttonVisible, setButtonVisible] = (0, import_react.useState)(false);
+    let flexDirection = config.horizontal ? "row" : "column";
+    return /* @__PURE__ */ import_react.default.createElement(ConfigContext.Provider, {
+      value: { ...config, concreteTypes }
+    }, /* @__PURE__ */ import_react.default.createElement("div", {
+      ref,
+      className: "interpreter",
+      style: { flexDirection },
+      onMouseEnter: () => setButtonVisible(true),
+      onMouseLeave: () => setButtonVisible(false)
+    }, /* @__PURE__ */ import_react.default.createElement("button", {
+      className: "concrete-types",
+      onClick: () => setConcreteTypes(!concreteTypes),
+      style: { opacity: buttonVisible ? "1" : "0" }
+    }, /* @__PURE__ */ import_react.default.createElement("i", {
+      className: `fa fa-${concreteTypes ? "eye-slash" : "eye"}`
+    })), steps.map((step, i) => /* @__PURE__ */ import_react.default.createElement(StepView, {
+      key: i,
+      index: i,
+      step,
+      container: ref
+    }))));
   };
   var filterSteps = (steps, ranges) => {
     let stepsRev = [...steps].reverse();
@@ -54401,7 +54652,7 @@
       return container;
     }
   };
-  function renderInterpreter(view, container, steps, contents, markedRanges) {
+  function renderInterpreter(view, container, steps, contents, markedRanges, config = {}) {
     let root = import_client.default.createRoot(container);
     if (markedRanges.length > 0) {
       let [sortedRanges, filteredSteps] = filterSteps(steps, markedRanges);
@@ -54423,15 +54674,12 @@
       });
     }
     root.render(
-      /* @__PURE__ */ import_react.default.createElement("div", {
-        className: "interpreter"
-      }, /* @__PURE__ */ import_react.default.createElement(CodeContext.Provider, {
+      /* @__PURE__ */ import_react.default.createElement(CodeContext.Provider, {
         value: contents
-      }, steps.map((step, i) => /* @__PURE__ */ import_react.default.createElement(StepView, {
-        key: i,
-        index: i,
-        step
-      }))))
+      }, /* @__PURE__ */ import_react.default.createElement(InterpreterView, {
+        steps,
+        config
+      }))
     );
   }
   var readChar = "R";
@@ -54495,78 +54743,71 @@
     },
     provide: (f) => EditorView.decorations.from(f)
   });
+  var loanFactsStateType = StateEffect.define();
+  var loanFactsField = genStateField(
+    loanFactsStateType,
+    (ts) => ts.flatMap(loanFactsToDecoration)
+  );
+  function loanFactsToDecoration({
+    refinerTag,
+    regionTag,
+    refinerPoint,
+    region
+  }) {
+    let loanDeco = Decoration.mark({
+      class: "aquascope-loan",
+      tagName: refinerTag
+    }).range(refinerPoint.char_start, refinerPoint.char_end);
+    let regionDecos = region.refined_ranges.filter((range) => range.char_start != range.char_end).map((range) => {
+      let highlightedRange = Decoration.mark({
+        class: "aquascope-live-region",
+        tagName: regionTag
+      }).range(range.char_start, range.char_end);
+      return highlightedRange;
+    });
+    return [loanDeco, ...regionDecos];
+  }
+  function generateAnalysisDecorationFacts(output) {
+    let points = {};
+    let regions = {};
+    let stateFacts = [];
+    for (const loan in output.loan_regions) {
+      let loanTag = makeTag(26);
+      let regionTag = makeTag(26);
+      let refinedRegion = output.loan_regions[loan];
+      let loanPoint = output.loan_points[loan];
+      points[loan] = loanTag;
+      regions[loan] = regionTag;
+      let loanFacts = {
+        refinerTag: loanTag,
+        regionTag,
+        refinerPoint: loanPoint,
+        region: refinedRegion
+      };
+      stateFacts.push(loanFacts);
+    }
+    let facts = {
+      loanPoints: points,
+      loanRegions: regions
+    };
+    return [facts, stateFacts];
+  }
   var permissionStateIcoType = StateEffect.define();
-  var RegionEnd = class extends WidgetType {
-    constructor(elem) {
-      super();
-      this.elem = elem;
-    }
-    eq(_other) {
-      return false;
-    }
-    toDOM(_view) {
-      return this.elem;
-    }
-  };
-  var makeBraceElem = (content2, color) => {
-    let wrap = document.createElement("span");
-    wrap.classList.add("cm-region-end");
-    wrap.textContent = content2;
-    wrap.style.color = color.toString();
-    wrap.style.fontSize = `${glyphWidth * 2}`;
-    return wrap;
-  };
   var SinglePermIcon = class {
-    constructor(contents, expected, actual, color, onHover, wasCopied = false) {
+    constructor(contents, expected, actual, color, facts, typeRefined, moveRefined, loanRefined, wasCopied = false) {
       this.contents = contents;
       this.expected = expected;
       this.actual = actual;
       this.color = color;
-      this.onHover = onHover;
+      this.facts = facts;
+      this.typeRefined = typeRefined;
+      this.moveRefined = moveRefined;
+      this.loanRefined = loanRefined;
       this.wasCopied = wasCopied;
       this.display = expected;
-      this.start = makeBraceElem("{ ", color);
-      this.end = makeBraceElem(" }", color);
-      this.loanTag = makeTag(20);
-      this.regionTag = makeTag(25);
     }
     getAuxiliary() {
-      if (this.onHover == void 0 || !this.display) {
-        return [];
-      }
-      const variant = this.onHover.type;
-      if ("InsufficientType" === variant) {
-        console.log("TODO: display explanation for insufficient types");
-        return [];
-      }
-      const refinedRegion = this.onHover;
-      let loanDeco = Decoration.mark({
-        class: "aquascope-loan",
-        tagName: this.loanTag
-      }).range(
-        refinedRegion.refiner_point.char_start,
-        refinedRegion.refiner_point.char_end
-      );
-      let regionDecos = refinedRegion.refined_ranges.filter((range) => range.char_start != range.char_end).map((range) => {
-        console.log(range);
-        let highlightedRange = Decoration.mark({
-          class: "aquascope-live-region",
-          tagName: this.regionTag
-        }).range(range.char_start, range.char_end);
-        return highlightedRange;
-      });
-      let start = this.start;
-      let charStart = refinedRegion.start.char_start;
-      let _startDeco = Decoration.widget({
-        widget: new RegionEnd(start)
-      }).range(charStart);
-      let end = this.end;
-      let charEnd = refinedRegion.end.char_end;
-      let _endDeco = Decoration.widget({
-        widget: new RegionEnd(end)
-      }).range(charEnd);
-      let extraDecos = [loanDeco, ...regionDecos];
-      return extraDecos;
+      return [];
     }
     toDOM() {
       let tt2 = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -54577,33 +54818,38 @@
       tt2.setAttribute("stroke-width", this.actual == this.expected ? "1" : "2");
       tt2.setAttribute("paint-order", "stroke");
       tt2.textContent = this.contents;
-      let myColor = this.color;
-      let transparent = whiteColor.withAlpha(0);
       let forCustomTag = (tag, callback) => {
         Array.from(
           document.getElementsByTagName(tag)
         ).forEach(callback);
       };
-      tt2.addEventListener("mouseenter", (_4) => {
-        this.start.style.width = "15px";
-        this.end.style.width = "15px";
-        forCustomTag(this.loanTag, (elem) => {
-          elem.style.textDecoration = `underline 3px ${myColor.toString()}`;
+      let insertHoverToggle = (loanKey) => {
+        let myColor = this.color;
+        let transparent = whiteColor.withAlpha(0);
+        const loanTag = this.facts.loanPoints[loanKey];
+        const regionTag = this.facts.loanRegions[loanKey];
+        console.log(`inserting the toggle! ${loanTag} ${regionTag}`);
+        tt2.addEventListener("mouseenter", (_4) => {
+          forCustomTag(loanTag, (elem) => {
+            elem.style.textDecoration = `underline 3px ${myColor.toString()}`;
+          });
+          forCustomTag(regionTag, (elem) => {
+            elem.style.backgroundColor = myColor.withAlpha(0.2).toString();
+          });
         });
-        forCustomTag(this.regionTag, (elem) => {
-          elem.style.backgroundColor = myColor.withAlpha(0.2).toString();
+        tt2.addEventListener("mouseleave", (_4) => {
+          forCustomTag(loanTag, (elem) => {
+            elem.style.textDecoration = `underline 3px ${transparent.toString()}`;
+          });
+          forCustomTag(regionTag, (elem) => {
+            elem.style.backgroundColor = whiteColor.withAlpha(0).toString();
+          });
         });
-      });
-      tt2.addEventListener("mouseleave", (_4) => {
-        this.start.style.width = "0px";
-        this.end.style.width = "0px";
-        forCustomTag(this.loanTag, (elem) => {
-          elem.style.textDecoration = `underline 3px ${transparent.toString()}`;
-        });
-        forCustomTag(this.regionTag, (elem) => {
-          elem.style.backgroundColor = whiteColor.withAlpha(0).toString();
-        });
-      });
+      };
+      console.log(this);
+      if (this.loanRefined !== void 0) {
+        insertHoverToggle(this.loanRefined);
+      }
       return tt2;
     }
   };
@@ -54639,11 +54885,6 @@
         ico.setAttribute("fill", fillColor.toString());
         ico.setAttribute("stroke", icoI.color.toString());
         ico.dataset.bufferPos = this.pos.toString();
-        if (icoI.wasCopied) {
-          ico.classList.add("copied-tip");
-        } else if (icoI.onHover?.type === "InsufficientType") {
-          ico.classList.add("insufficient-type-tip");
-        }
         wrap.appendChild(ico);
       });
       return wrap;
@@ -54652,29 +54893,39 @@
       return false;
     }
   };
-  var callTypesToPermissions = (permInfo) => {
-    const expl = permInfo.explanations;
+  var fromPermissionsBoundary = (permInfo, facts) => {
+    const data = permInfo.actual;
+    console.log(permInfo);
     const readIco = new SinglePermIcon(
       readChar,
       permInfo.expected.read,
-      permInfo.actual.read,
+      data.permissions.read,
       readColor,
-      expl?.read
+      facts,
+      false,
+      data.path_moved,
+      data.loan_read_refined
     );
     const writeIco = new SinglePermIcon(
       writeChar,
       permInfo.expected.write,
-      permInfo.actual.write,
+      data.permissions.write,
       writeColor,
-      expl?.write
+      facts,
+      !data.type_writeable,
+      data.path_moved,
+      data.loan_write_refined
     );
     const dropIco = new SinglePermIcon(
       dropChar,
       permInfo.expected.drop,
-      permInfo.actual.drop,
+      data.permissions.drop,
       dropColor,
-      expl?.drop,
-      permInfo.was_copied
+      facts,
+      !data.type_droppable,
+      data.path_moved,
+      data.loan_write_refined,
+      data.type_copyable
     );
     return [readIco, writeIco, dropIco, permInfo.location];
   };
@@ -54754,7 +55005,7 @@
   var receiverPermissionsField = {
     effectType: permissionStateIcoType,
     stateField: boundaryStateField,
-    fromOutput: callTypesToPermissions
+    fromOutput: fromPermissionsBoundary
   };
   var permissionsDiffIcoType = StateEffect.define();
   var PermDiffRowIcon = class {
@@ -54850,10 +55101,16 @@
           ([diff, content2]) => diff.type == "High" ? /* @__PURE__ */ import_react2.default.createElement("span", {
             key: content2,
             className: "perm-diff-add"
-          }, "+", content2) : diff.type == "Low" ? /* @__PURE__ */ import_react2.default.createElement("span", {
+          }, content2) : diff.type == "Low" ? /* @__PURE__ */ import_react2.default.createElement("span", {
             key: content2,
             className: "perm-diff-sub"
-          }, "-", content2) : null
+          }, content2) : diff.type === "None" && diff.value ? /* @__PURE__ */ import_react2.default.createElement("span", {
+            key: content2,
+            className: "perm-diff-none-high"
+          }, content2) : diff.type === "None" && !diff.value ? /* @__PURE__ */ import_react2.default.createElement("span", {
+            key: content2,
+            className: "perm-diff-none-low"
+          }, "-") : null
         ));
       };
     }
@@ -54888,7 +55145,7 @@
       let spaces = " " + "\u2015".repeat(padding);
       let table = /* @__PURE__ */ import_react2.default.createElement("table", {
         className: "perm-step-table"
-      }, this.diffs.map((diff) => diff.render()));
+      }, this.diffs.map((diff, i) => diff.render()));
       let inner = /* @__PURE__ */ import_react2.default.createElement(import_react2.default.Fragment, null, spaces, table);
       div.innerHTML = import_server.default.renderToStaticMarkup(inner);
       return div;
@@ -54897,7 +55154,7 @@
       return false;
     }
   };
-  var stateStepToPermissions = (stateStep) => {
+  var stateStepToPermissions = (stateStep, _facts) => {
     let icos = stateStep.state.map(([path, diff]) => {
       return new PermDiffRowIcon(path, diff);
     });
@@ -54931,11 +55188,11 @@
   var defaultCodeExample = `
 fn main() {
   \`[let n = 5;]\`
-  \`[let y = plus_one(n);]\`  
+  \`[let y = plus_one(n);]\`
   println!("The value of y is: {y}");
 }
 
-\`[fn plus_one(x: i32)]\` -> i32 {  
+\`[fn plus_one(x: i32)]\` -> i32 {
   x + 1
 }
 `.trim();
@@ -55011,6 +55268,7 @@ fn main() {
           indentUnit.of("  "),
           copiedValueHover,
           insufficientTypeHover,
+          loanFactsField,
           ...supportedFields
         ]
       });
@@ -55039,8 +55297,13 @@ fn main() {
         effects: [f.effectType.of([])]
       });
     }
-    addPermissionsField(f, methodCallPoints) {
-      let newEffects = methodCallPoints.map(f.fromOutput);
+    addAnalysisFacts(vs) {
+      this.view.dispatch({
+        effects: [loanFactsStateType.of(vs)]
+      });
+    }
+    addPermissionsField(f, methodCallPoints, facts) {
+      let newEffects = methodCallPoints.map((v) => f.fromOutput(v, facts));
       console.log(newEffects);
       this.view.dispatch({
         effects: [f.effectType.of(newEffects)]
@@ -55061,7 +55324,7 @@ fn main() {
       let serverResponse = await serverResponseRaw.json();
       return serverResponse;
     }
-    async renderOperation(operation, out) {
+    async renderOperation(operation, out, config) {
       if (!out) {
         let serverResponse = await this.callBackendWithCode(operation);
         if (serverResponse.success) {
@@ -55084,17 +55347,24 @@ fn main() {
           this.interpreterContainer,
           result,
           this.view.state.doc.toJSON().join("\n"),
-          this.markedRanges
+          this.markedRanges,
+          config
         );
       } else if (operation == "permission-diffs") {
-        this.addPermissionsField(coarsePermissionDiffs, result);
+        let emptyFacts = {
+          loanPoints: {},
+          loanRegions: {}
+        };
+        this.addPermissionsField(coarsePermissionDiffs, result, emptyFacts);
       } else if (operation == "receiver-types") {
-        this.addPermissionsField(receiverPermissionsField, result);
+        let [facts, loanFacts] = generateAnalysisDecorationFacts(result);
+        this.addAnalysisFacts(loanFacts);
+        this.addPermissionsField(receiverPermissionsField, result.values, facts);
       }
     }
   };
 
-  // ../../node_modules/.pnpm/@codemirror+commands@6.1.2/node_modules/@codemirror/commands/dist/index.js
+  // ../../node_modules/.pnpm/@codemirror+commands@6.1.3/node_modules/@codemirror/commands/dist/index.js
   var toggleComment = (target) => {
     let config = getConfig(target.state);
     return config.line ? toggleLineComment(target) : config.block ? toggleBlockCommentByLine(target) : false;
@@ -55619,7 +55889,7 @@ fn main() {
   function extendSel(view, how) {
     let selection = updateSel(view.state.selection, (range) => {
       let head = how(range);
-      return EditorSelection.range(range.anchor, head.head, head.goalColumn);
+      return EditorSelection.range(range.anchor, head.head, head.goalColumn, head.bidiLevel || void 0);
     });
     if (selection.eq(view.state.selection))
       return false;
@@ -56125,13 +56395,7 @@ fn main() {
     document.querySelectorAll(".aquascope-embed").forEach((elem) => {
       elem.classList.remove("aquascope-embed");
       elem.classList.add("aquascope");
-      let btnWrap = document.createElement("div");
-      btnWrap.classList.add("top-right");
-      let computePermBtn = document.createElement("button");
-      computePermBtn.className = "fa fa-refresh cm-button";
       let initialCode = JSON.parse(elem.dataset.code);
-      btnWrap.appendChild(computePermBtn);
-      elem.appendChild(btnWrap);
       let serverUrl = elem.dataset.serverUrl ? new URL(elem.dataset.serverUrl) : void 0;
       let readOnly3 = elem.dataset.noInteract == "true";
       let ed = new Editor(
@@ -56153,10 +56417,8 @@ fn main() {
       let operation = elem.dataset.operation;
       if (operation) {
         let response = elem.dataset.response ? JSON.parse(elem.dataset.response) : void 0;
-        ed.renderOperation(operation, response);
-        computePermBtn.addEventListener("click", (_4) => {
-          ed.renderOperation(operation);
-        });
+        let config = elem.dataset.config ? JSON.parse(elem.dataset.config) : void 0;
+        ed.renderOperation(operation, response, config);
       }
     });
   };

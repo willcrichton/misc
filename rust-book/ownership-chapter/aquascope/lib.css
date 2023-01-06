@@ -78,6 +78,8 @@
 .aquascope .perm-step-widget {
   display: inline-block;
   color: #ccc;
+  position: relative;
+  top: 0.5em;
 }
 .aquascope .perm-step-table {
   background-color: whitesmoke;
@@ -101,11 +103,17 @@
 .aquascope span.perm-diff-add {
   color: rgb(93, 202, 54);
 }
-.aquascope spen.perm-diff-none {
-  color: lightgray;
-}
 .aquascope span.perm-diff-sub {
   color: rgb(255, 66, 68);
+}
+.aquascope spen.perm-diff-none {
+  color: black;
+}
+.aquascope span.perm-diff-none-high {
+  color: black;
+}
+.aquascope span.perm-diff-none-low {
+  color: black;
 }
 .aquascope .aquascope-action-indicator {
   font-size: 0.9em;
@@ -114,30 +122,64 @@
   display: inline-block;
   border-radius: 4px;
   padding: 0 2px;
-  background: var(--bg);
-  border: 1px solid var(--fg);
+  background: white;
+  border: 1px solid black;
 }
 .cm-editor .step-marker {
-  margin: 0 6px;
+  margin: 2px 6px 0;
 }
 .step-marker > span {
   font-size: 0.8em;
-  color: var(--fg);
+  color: black;
   vertical-align: middle;
   position: relative;
   bottom: 1px;
   font-weight: bold;
 }
 .interpreter {
-  background: var(--bg);
-  padding: 1em;
+  background: white;
+  padding: 1rem;
   display: flex;
   gap: 30px;
-  flex-direction: column;
   flex-wrap: wrap;
+  overflow-x: auto;
+  position: relative;
 }
-.interpreter .step {
-  width: max-content;
+.interpreter .concrete-types {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0;
+  font-size: 14px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin: 0px 5px;
+  transition: 100ms;
+  transition-property:
+    color,
+    border-color,
+    background-color,
+    opacity;
+  cursor: pointer;
+}
+.interpreter .step .header {
+  position: relative;
+}
+.interpreter .step .header .header-text {
+  position: relative;
+  z-index: 12;
+}
+.interpreter .step .header .header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 11;
+  background: white;
+  opacity: 0.8;
 }
 .interpreter .step .step-header {
   margin-bottom: 5px;
@@ -153,13 +195,13 @@
 .interpreter .step .memory-container {
   display: flex;
   flex-direction: row;
-  gap: 100px;
+  gap: 80px;
   padding-left: 10px;
 }
 .interpreter .step .memory-container .memory {
-  flex: 1;
   border: 1px dashed #ccc;
-  padding: 0.5em;
+  padding: 0.7rem;
+  height: max-content;
 }
 .interpreter .step .memory-container .memory .frames {
   display: flex;
@@ -168,6 +210,9 @@
 }
 .interpreter .step .memory-container .memory .frames .frame-header {
   font-family: "Source Code Pro", monospace;
+}
+.interpreter .step .memory-container .memory .frames .empty-frame {
+  font-size: 0.85em;
 }
 .interpreter .step h2 {
   margin-top: 0;
@@ -184,6 +229,10 @@
 }
 .interpreter .step table td {
   border: 1px solid #ccc;
+  transition: width 1s, height 1s;
+}
+.leader-line {
+  z-index: 10;
 }
 
 /* src/styles.scss */
@@ -242,5 +291,27 @@
 }
 .aquascope .perm-step-table td {
   padding: 1px 4px;
+}
+.step-marker {
+  background-color: var(--bg);
+  border-color: var(--fg);
+}
+.step-marker > span {
+  color: var(--fg);
+}
+.interpreter {
+  background: var(--bg);
+}
+.interpreter .step .header .header-bg {
+  background: var(--bg);
+}
+.interpreter table {
+  margin: 0;
+}
+.interpreter table tbody tr:nth-child(2n) {
+  background: inherit;
+}
+.interpreter table td {
+  padding: 2px 4px;
 }
 /*# sourceMappingURL=lib.css.map */
