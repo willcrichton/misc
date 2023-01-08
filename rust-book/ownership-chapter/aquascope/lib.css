@@ -106,7 +106,7 @@
 .aquascope span.perm-diff-sub {
   color: rgb(255, 66, 68);
 }
-.aquascope spen.perm-diff-none {
+.aquascope span.perm-diff-none {
   color: black;
 }
 .aquascope span.perm-diff-none-high {
@@ -222,10 +222,32 @@
 .interpreter .step code {
   font-size: 0.8em;
 }
+.interpreter .step table.locals,
+.interpreter .step .heap > table {
+  border: 2px solid #ccc;
+}
+.interpreter .step table.locals > tbody > tr > td,
+.interpreter .step .heap > table > tbody > tr > td {
+  border-width: 2px;
+  padding: 4px 6px;
+}
 .interpreter .step table {
   border: 1px solid #ccc;
   border-collapse: collapse;
   font-family: "Source Code Pro", monospace;
+}
+.interpreter .step table.array {
+  border: none;
+}
+.interpreter .step table.array td {
+  border-top: none;
+  border-bottom: none;
+}
+.interpreter .step table.array td:first-child {
+  border-left: none;
+}
+.interpreter .step table.array td:last-child {
+  border-right: none;
 }
 .interpreter .step table td {
   border: 1px solid #ccc;
@@ -291,6 +313,11 @@
 }
 .aquascope .perm-step-table td {
   padding: 1px 4px;
+}
+.aquascope span.perm-diff-none,
+.aquascope span.perm-diff-none-high,
+.aquascope span.perm-diff-none-low {
+  color: var(--fg);
 }
 .step-marker {
   background-color: var(--bg);

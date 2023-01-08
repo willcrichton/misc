@@ -54306,7 +54306,9 @@
         "data-connector": "bottom"
       }, children));
     };
-    return /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, /* @__PURE__ */ import_react.default.createElement("tr", null, value.type == "All" ? value.value.map((el, i) => /* @__PURE__ */ import_react.default.createElement(IndexedContainer, {
+    return /* @__PURE__ */ import_react.default.createElement("table", {
+      className: "array"
+    }, /* @__PURE__ */ import_react.default.createElement("tbody", null, /* @__PURE__ */ import_react.default.createElement("tr", null, value.type == "All" ? value.value.map((el, i) => /* @__PURE__ */ import_react.default.createElement(IndexedContainer, {
       key: i,
       index: i
     }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
@@ -54324,8 +54326,8 @@
   };
   var StructView = ({ value }) => {
     let pathCtx = (0, import_react.useContext)(PathContext);
-    let configCtx = (0, import_react.useContext)(ConfigContext);
-    if (value.alloc_kind !== null && !configCtx.concreteTypes) {
+    let config = (0, import_react.useContext)(ConfigContext);
+    if (value.alloc_kind !== null && !config.concreteTypes) {
       let alloc_type = value.alloc_kind.type;
       let read_field = (v, k) => {
         let field = v.fields.find(([k2]) => k == k2);
@@ -54363,7 +54365,7 @@
     }
     if (value.fields.length == 1) {
       let path = [...pathCtx, "field", "0"];
-      return /* @__PURE__ */ import_react.default.createElement("div", {
+      return /* @__PURE__ */ import_react.default.createElement("span", {
         className: path.join("-")
       }, /* @__PURE__ */ import_react.default.createElement(PathContext.Provider, {
         value: path
@@ -54383,6 +54385,33 @@
         value: v
       }))));
     }))));
+  };
+  var PointerView = ({ value: { path, range } }) => {
+    let config = (0, import_react.useContext)(ConfigContext);
+    let segment = path.segment.type == "Heap" ? `heap-${path.segment.value.index}` : `stack-${path.segment.value.frame}-${path.segment.value.local}`;
+    let parts = [...path.parts];
+    let lastPart = import_lodash2.default.last(parts);
+    let slice = lastPart && lastPart.type == "Subslice" ? lastPart.value : void 0;
+    if (lastPart && lastPart.type == "Index" && lastPart.value == 0)
+      parts.pop();
+    let partClass = parts.map(
+      (part) => part.type == "Index" ? `index-${part.value}` : part.type == "Field" ? `field-${part.value}` : part.type == "Subslice" ? `index-${part.value[0]}` : ""
+    );
+    let attrs = {
+      ["data-point-to"]: [segment, ...partClass].join("-")
+    };
+    if (slice) {
+      attrs["data-point-to-range"] = [
+        segment,
+        ...partClass.slice(0, -1),
+        `index-${slice[1]}`
+      ].join("-");
+    }
+    let ptrView = /* @__PURE__ */ import_react.default.createElement("span", {
+      className: "pointer",
+      ...attrs
+    }, "\u25CF");
+    return config.concreteTypes && range ? /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, /* @__PURE__ */ import_react.default.createElement("tr", null, /* @__PURE__ */ import_react.default.createElement("td", null, "ptr"), /* @__PURE__ */ import_react.default.createElement("td", null, ptrView)), /* @__PURE__ */ import_react.default.createElement("tr", null, /* @__PURE__ */ import_react.default.createElement("td", null, "len"), /* @__PURE__ */ import_react.default.createElement("td", null, range.toString())))) : ptrView;
   };
   var ValueView = ({ value }) => {
     let pathCtx = (0, import_react.useContext)(PathContext);
@@ -54409,32 +54438,9 @@
       }, /* @__PURE__ */ import_react.default.createElement(ValueView, {
         value: v
       }))));
-    })))) : value.type == "Pointer" ? (() => {
-      let ptr = value.value;
-      let segment = ptr.segment.type == "Heap" ? `heap-${ptr.segment.value.index}` : `stack-${ptr.segment.value.frame}-${ptr.segment.value.local}`;
-      let parts = [...ptr.parts];
-      let lastPart = import_lodash2.default.last(parts);
-      let slice = lastPart && lastPart.type == "Subslice" ? lastPart.value : void 0;
-      if (lastPart && lastPart.type == "Index" && lastPart.value == 0)
-        parts.pop();
-      let partClass = parts.map(
-        (part) => part.type == "Index" ? `index-${part.value}` : part.type == "Field" ? `field-${part.value}` : part.type == "Subslice" ? `index-${part.value[0]}` : ""
-      );
-      let attrs = {
-        ["data-point-to"]: [segment, ...partClass].join("-")
-      };
-      if (slice) {
-        attrs["data-point-to-range"] = [
-          segment,
-          ...partClass.slice(0, -1),
-          `index-${slice[1]}`
-        ].join("-");
-      }
-      return /* @__PURE__ */ import_react.default.createElement("span", {
-        className: "pointer",
-        ...attrs
-      }, "\u25CF");
-    })() : value.type == "Array" ? /* @__PURE__ */ import_react.default.createElement(AbbreviatedView, {
+    })))) : value.type == "Pointer" ? /* @__PURE__ */ import_react.default.createElement(PointerView, {
+      value: value.value
+    }) : value.type == "Array" ? /* @__PURE__ */ import_react.default.createElement(AbbreviatedView, {
       value: value.value
     }) : value.type == "Unallocated" ? /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "X") : /* @__PURE__ */ import_react.default.createElement(import_react.default.Fragment, null, "TODO"));
   };
@@ -54442,8 +54448,10 @@
     index,
     locals
   }) => locals.length == 0 ? /* @__PURE__ */ import_react.default.createElement("div", {
-    className: "empty-frame"
-  }, "(empty frame)") : /* @__PURE__ */ import_react.default.createElement("table", null, /* @__PURE__ */ import_react.default.createElement("tbody", null, locals.map(([key, value], i) => {
+    className: "locals empty-frame"
+  }, "(empty frame)") : /* @__PURE__ */ import_react.default.createElement("table", {
+    className: "locals"
+  }, /* @__PURE__ */ import_react.default.createElement("tbody", null, locals.map(([key, value], i) => {
     let path = ["stack", index.toString(), key];
     return /* @__PURE__ */ import_react.default.createElement("tr", {
       key: i
@@ -54523,7 +54531,10 @@
         return dst;
       };
       let pointers = stepContainer.querySelectorAll(".pointer");
-      let color = getComputedStyle(document.body).getPropertyValue("--fg") ? "var(--fg)" : "black";
+      let mdbookEmbed = getComputedStyle(document.body).getPropertyValue(
+        "--inline-code-color"
+      );
+      let color = mdbookEmbed ? "var(--inline-code-color)" : "black";
       let lines = Array.from(pointers).map((src) => {
         try {
           let dstSel = src.dataset.pointTo;
@@ -54535,7 +54546,7 @@
             width: dstRange.offsetLeft + dst.offsetWidth - dst.offsetLeft,
             height: 2,
             y: "100%",
-            fillColor: "red"
+            fillColor: mdbookEmbed ? "var(--search-mark-bg)" : "red"
           }) : dstSel.startsWith("stack") ? import_leader_line_new.default.pointAnchor(dst, { x: "100%", y: "75%" }) : dst;
           let line = new import_leader_line_new.default(src, dstAnchor, {
             color,
@@ -54653,6 +54664,9 @@
     }
   };
   function renderInterpreter(view, container, steps, contents, markedRanges, config = {}) {
+    if (config.hideCode) {
+      view.destroy();
+    }
     let root = import_client.default.createRoot(container);
     if (markedRanges.length > 0) {
       let [sortedRanges, filteredSteps] = filterSteps(steps, markedRanges);
@@ -54692,6 +54706,16 @@
       this.g = g;
       this.b = b;
     }
+    static fromVar(cssVar, fallback) {
+      let hex = getComputedStyle(document.body).getPropertyValue(cssVar);
+      if (!hex)
+        return new RGB(...fallback);
+      let rgb = hex.replace(
+        /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+        (m, r, g, b) => "#" + r + r + g + g + b + b
+      ).substring(1).match(/.{2}/g).map((x) => parseInt(x, 16));
+      return new RGB(...rgb);
+    }
     toString() {
       return `rgb(${this.r},${this.g},${this.b})`;
     }
@@ -54718,7 +54742,7 @@
   var softBlue = new RGB(78, 190, 239);
   var softYellow = new RGB(238, 238, 155);
   var softOrange = new RGB(245, 202, 123);
-  var whiteColor = new RGB(255, 255, 255);
+  var whiteColor = RGB.fromVar("--bg", [255, 255, 255]);
   var dropColor = softRed;
   var readColor = softGreen;
   var writeColor = softBlue;
