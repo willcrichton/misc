@@ -1,0 +1,468 @@
+% import "@nota-lang/nota-theme-acm/dist/index.css"
+% import _ from "lodash"
+
+
+@Title: Thoughts on Document Languages
+
+%%%
+let msf = macro{\mathsf{#1}}
+let sem = macro{\llbracket #1 \rrbracket}
+let sug = macro{\lBrace #1 \rBrace}
+let str = #msf{String}
+let list = #msf{List}
+let expr = #msf{Expr}
+let doc = #msf{Doc}
+let tmpl = #msf{Template}
+let tpart = #msf{TPart}
+let dlang = #{\mathcal{D}}
+let quot = macro{\text{\textquotedblleft} \text{#1} \text{\textquotedblright}}
+let dl = #{doc&shy;lang}
+let Dl = #{Doc&shy;lang}
+
+let d_strid = #{#dlang^{#msf{str}}_{#msf{id}}};
+let d_strvar = #{#dlang^{#msf{str}}_{#msf{var}}};
+let d_strcat = #{#dlang^{#msf{str}}_{#msf{cat}}};
+let d_strtmpl1 = #{#dlang^{#msf{str}}_{#msf{tmpl\text{-}var}}};
+let d_strtmpl2 = #{#dlang^{#msf{str}}_{#msf{tmpl\text{-}lang}}};
+
+let ite = macro{#msf{if} ~ #1 ~ #msf{then} ~ #2 ~ #msf{else} ~ #3}
+let letexp = macro{#msf{let} ~ #1 = #2 ~ #msf{in} ~ #3}
+let set = macro{#msf{set} ~ #1 = #2}
+%%%
+
+# Introduction
+
+Document languages (#(dl)s) are programming languages whose purpose is to generate documents like articles, books, web pages, and so on. #(Dl)s include [LaTeX], [Markdown], [PHP], and many others. The motivating question of this particular document is: *what is the essence of a #dl?*
+
+On the one hand, we ask this question out of curiosity. #(Dl)s have existed for decades, yet no one has tried to formalize the semantics of any #dl. What unexpected connections, categories, and concepts might be found in the process of designing a core #dl semantics? What truly differentiates the expressive power of LaTeX from Markdown [Scribble], and [Typst]? Where might we find document languages in unexpected places?
+
+On the other hand, we ask this question out of necessity. Web browsers have matured into semi-stable platforms for documents. Compared with PDF, the browser offers advantages in both presentation (styling, layout, etc.) and computation (reactivity, animations, etc.). Recent years have seen an explosion of interest in web #(dl)s that leverage these advantages. For example, recent industry #(dl)s include [MDX], [Markdoc], [Quarto], and [JupyterBook]. Recent academic #(dl)s include [Idyll] and [Living Papers]. 
+
+These new languages enable the interleaving of computations and document fragments in a manner of unprecedented complexity in the history of #(dl)s. Consequently, we have found that these newer #(dl)s often have fragile semantics. For instance, Quarto supports variables for reusing data between code blocks, but a different and non-interoperable system of variables is used to share text between document blocks. Living Papers supports components that react to changes in runtime values, but only if those values are the JSON subset of data types. MDX supports recursive nesting of [JSX React] within Markdown, but not for the case of higher-order components. 
+
+In sum, the goal of this document is to articulate the essence of a #dl for two reasons. One, we seek to shed light on the general relationships between different document languages. Two, we seek to establish a well-defined and compositional basis for modern #(dl)s that overcomes the challenges described above.
+
+# Model
+
+A document language $#dlang$ consists of document programs $e \in #expr$, a document domain $d \in #doc$, and a semantics $#sem{\cdot} : #expr \rightarrow #doc$ that relates the two. To explore the essence of #(dl)s, we'll start with the simplest kind of document: strings.
+
+
+## Strings
+
+A string $s \in #str$ is a sequence of characters $c$, such as "x" or "γ" or "📄". 
+
+### String Literals
+
+ The simplest doclang is the string-identity doclang $#d_strid$ where $#doc = #expr = #str$ and $#sem{s} = s$. Examples of the string-identity doclang are text files and string literals.
+
+### String Programs
+
+
+More interesting doclangs permit computation. For example, $#d_strcat$ supports concatenation:
+
+$$
+\begin{align*}
+#expr~e &::= s \mid e_1 + e_2 \\[1em]
+#sem{s} &= s \\
+#sem{e_1 + e_2} &= #sem{e_1} + #sem{e_2} \\
+\end{align*}
+$$
+
+However, this language isn't very useful since any program like $#quot{hello} + #quot{ world}$ could just as easily be written as $#quot{hello world}$. So we can add variables to make a language $#d_strvar$:
+
+$$
+\begin{align*}
+#msf{Variable}~x& \\
+#expr~e &::= \ldots \mid x \mid #letexp{x}{e_1}{e_2} \\[1em]
+#sem{#letexp{x}{e_1}{e_2}} &= #sem{e_2[x \mapsto #sem{e_1}]}
+\end{align*}
+$$
+
+For example, $#sem{#letexp{x}{#quot{a}}{x + #quot{b} + x}} = #quot{aba}$ . Note that $#sem{\cdot}^{#msf{str}}_{#msf{var}}$ is undefined for free variables, so $#d_strvar$ requires a type system to avoid undefined behavior.
+
+### Template Strings
+
+
+$#d_strvar$ is similar to *template strings* found in languages like [Javascript][js-template] and [Python][python-template]. For example, the "aba" program is similar to this Javascript program:
+
+```
+let x = "a";
+`${x}b${x}`
+```
+
+Templates are essentially "strings with holes" where the holes permit computation. Without templates, documents must be composed *explicitly* through operations like concatenation. With templates, documents can be composed *implicitly* such as placing an expression and a string adjacent to each other in sequence. We can add templates to $#d_strvar$ to make a new language $#d_strtmpl1$ like this:
+
+$$
+\begin{align*}
+#tmpl~t &::= p_1, \ldots, p_n \\
+#tpart~p &::= s \mid e \\
+#expr~e &::= \ldots \mid t
+\end{align*}
+$$
+
+The semantics of templates can be best thought of as syntactic sugar for the underlying expression language, which we express with the desugar function $#sug{\cdot}_\alpha : \alpha \rightarrow #expr$. The essential desugaring rule is:
+
+$$
+#sug{p_1, \ldots, p_n}_{#tmpl} = #sug{p_1}_{#tpart} + \ldots + #sug{p_n}_{#tpart}
+$$
+
+This rule states that a sequence of template parts is desugared into the concatenation of each part. This rule captures the core value of the template, which is avoiding explicit concatenation. We also need rules to propagate desugaring through the rest of the AST, and to handle template parts:
+
+$$
+\begin{align*}
+#sug{s}_{#expr} &= s \\
+#sug{x}_{#expr} &= x \\
+#sug{e_1 + e_2}_{#expr} &= #sug{e_1}_{#expr} + #sug{e_2}_{#expr} \\
+#sug{#letexp{x}{e_1}{e_2}}_{#expr} &= #letexp{x}{#sug{e_1}_{#expr}}{#sug{e_2}_{#expr}} \\
+#sug{t}_{#expr} &= #sug{t}_{#tmpl} \\
+#sug{s}_{#tpart} &= #sug{s}_{#expr} \\
+#sug{e}_{#tpart} &= #sug{e}_{#expr}
+\end{align*}
+$$
+
+
+### Template Languages
+
+Languages with sufficiently expressive templates are called *template languages*, like [Handlebars] and [Jinja]. For example, you can express the entire "aba" example in Jinja, including the variable assignment:
+
+```
+{% set x = "a" %}
+{{ x }}b{{ x }}
+```
+
+To model this capability, let-bindings must be lifted into the template language, which requires changing the template desugar function:
+
+$$
+\begin{align*}
+#tpart~p &::= \ldots \mid #set{x}{e} \\[1em]
+
+#sug{p, p^*}_#tmpl &= \begin{cases}
+  #letexp{x}{e}{#sug{p^*}_#tmpl} &\text{if} ~ p = (#set{x}{e}) \\
+  #sug{p}_#tpart + #sug{p^*}_#tmpl &\text{otherwise} 
+\end{cases}
+\end{align*}
+$$
+
+Template languages also feature control-flow, iteration and nested templates such as in Handlebars:
+
+```
+<ul class="people_list">
+  {{#each people}}
+    <li>{{this}}</li>
+  {{/each}}
+</ul>
+```
+
+To write this, we need to add lists and loops to create a new language $#d_strtmpl2$. To support multiple data types, the type of the semantic function is now $#sem{\cdot} : #msf{Expr} \rightarrow #msf{Expr}$.
+
+$$
+\begin{align*}
+#msf{Expr}~e &::= \ldots \mid [e_1, \ldots, e_n] \mid #msf{foreach} ~ e_1 ~ \{ x. e_2 \} \\[1em]
+
+#sem{ [e_1, \ldots, e_n] } &= [#sem{e_1}, \ldots, #sem{e_n}] \\
+#sem{ #msf{foreach} ~ e_1 ~ \{ x. e_2 \}} &= #sem{e_2[x \mapsto v_1]} + \ldots + #sem{e_2[x \mapsto v_n]} ~~~~ \text{where} ~ #sem{e_1} = [v_1, \ldots, v_n] \\
+
+\end{align*}
+$$
+
+Note also that the introduction of additional data-types introduces additional undefined behaviors from type-mismatch, such as claiming a number is a document, or trying to condition on a string-valued expression.
+
+We also need to translate if/foreach into the template language:
+
+$$
+\begin{align*}
+#msf{Template~Part} ~ p &::= \ldots \mid #msf{foreach} ~ e_1 ~ \{ x. t_2 \} \\[1em]
+
+#sug{ #msf{foreach} ~ e_1 ~ \{ x. t_2 \}}_#tpart &= #msf{foreach} ~ e_1 ~ \{ x . #sug{t_2}_#tmpl\}
+\end{align*}
+$$
+
+Then $#d_strtmpl2$ can express the Handlebars example.
+
+
+In general, "templates" (in the sense used colloquially among programmers) do not assume much about the underlying document structure --- documents are just strings. Structure only exists in the non-string data types of the doclang, such as lists.
+
+
+## Trees
+
+We can expand the space of doclangs by enriching the document model in one of two ways: (1) non-linear structure, and (2) reactivity. We'll start by focusing on the former. A basic hierarchical document usually has this structure:
+
+%%%
+let blck = #msf{Block}
+let inl = #msf{Inline}
+let text = #msf{Text}
+let bold = macro{#msf{bold}~#1}
+let para = macro{#msf{para}~#1}
+let section = macro{#msf{section}~#1~\{#2\}}
+
+let d_treeid = #{#dlang^{#msf{tree}}_{#msf{id}}};
+let d_treevar = #{#dlang^{#msf{tree}}_{#msf{var}}};
+let d_treetmpl = #{#dlang^{#msf{tree}}_{#msf{tmpl\text{-}var}}};
+%%%
+
+$$
+\begin{align*}
+#doc~d &::= b_1, \ldots, b_n \\
+#blck~b &::= #msf{para}~t \mid #msf{section}~t~\{d\}  \\
+#text~t &::= \ell_1, \ldots, \ell_n \\
+#inl~\ell &::= s \mid #msf{bold}~t \\
+\end{align*}
+$$
+
+
+Documents are organized into blocks $b$, which are either paragraphs of text or labeled sections with sub-documents. Text ranges are split up into sequences of inline elements, either plain strings or decorated strings like bolding. Inline elements are not permitted to hold block elements. 
+
+### Tree Literals
+
+Languages like [Markdown] are, in essence, the tree-identity doclang $#d_treeid$ whose program structure is exactly the document structure. All of Markdown's complexity is the parser, i.e. constructing $d$ from a concrete syntax. (We will return to parsing and concrete syntax later.)
+
+This document model is often enriched with cross-document references such as anchors and links:
+
+$$
+\begin{align*}
+#msf{Anchor}~a & \\
+#blck~b &::= \ldots \mid #msf{section}_a~t~\{d\} \\
+#inl~\ell &::= \ldots \mid #msf{link}~a~t
+\end{align*}
+$$
+
+Here, a section can be labeled with an anchor $a$, and the section can be linked-to via $a$. Note that without labels, all tree documents (and all string documents) are well-formed, i.e. there is a well-defined way to render the document. With labels, a link can refer to a non-existent anchor, and so a document $d$ (as distinct from a program that generates the document) can now be ill-formed. Ill-formed documents are usually either rejected by an AST analyzer (as you might find in [Pandoc]) or cause unexpected interactions in the renderer (such as clicking a webpage link that has no effect).
+
+### Tree Programs
+
+It is straightforward to compute with document trees by combining tree literals with additional features, like $#d_treevar$:
+
+$$
+\begin{align*}
+#expr~e &::=s \mid #bold{e} \mid #para{e} \mid #section{e_1}{e_2} \mid [e_1, \ldots, e_n] \\
+& \hspace{2em} \mid #letexp{x}{e_1}{e_2} \mid x \mid e_1 :: e_2
+\end{align*}
+$$
+
+$$
+\begin{align*}
+#sem{s} &= s \\
+#sem{#bold{e}} &= #bold{#sem{e}} \\
+#sem{#para{e}} &= #para{#sem{e}} \\
+#sem{#section{e_1}{e_2}} &= #section{#sem{e_1}}{#sem{e_2}} \\
+#sem{[e_1, \ldots, e_n]} &= [#sem{e_1}, \ldots, #sem{e_n}] \\
+#sem{#letexp{x}{e_1}{e_2}} &= #sem{e_2[x \mapsto #sem{e_1}]} \\
+#sem{e_1 :: e_2} &= #sem{e_1} :: #sem{e_2}
+
+\end{align*}
+$$
+
+Generating a tree in $#d_treevar$ is similar to generating DOM elements in Javascript via APIs like [`document.createElement`]. 
+
+### Tree Templates
+
+To add templates to the language, making $#d_treetmpl$, would look like:
+
+$$
+\begin{align*}
+#msf{Template~Doc}~d^T &::= b^T_1, \ldots, b^T_n \\
+#msf{Template~Block}~b^T &::= #msf{para}~t^T \mid #msf{section} ~ t^T ~ \{d^T\} \mid #set{x}{e} \mid e \\
+#msf{Template~Text}~t^T &::= \ell^T_1, \ldots, \ell^T_n \\
+#msf{Template~Inline}~\ell^T &::= s \mid #msf{bold}~t^T \mid #set{x}{e} \mid e
+\end{align*}
+$$
+
+Note that let-bindings and variables must be duplicated across each level of hierarchy in the document. Our template desugaring looks similar to before:
+
+$$
+\begin{align*}
+#sug{b^T, b^{T*}}_#doc &= \begin{cases}
+  #letexp{x}{e}{#sug{b^{T*}}_#doc} &\text{if} ~ b^T = (#set{x}{e}) \\
+  #sug{b^T}_#blck :: #sug{b^{T*}}_#doc &\text{otherwise} 
+\end{cases} \\
+#sug{#para{t^T}}_#blck &= #para{#sug{t^T}_#text} \\
+#sug{#section{t^T}{d^T}}_#blck &= #section{#sug{t^T}_#text}{#sug{d^T}_#doc} \\
+#sug{e}_#blck &= #sug{e}_#expr \\
+#sug{\ell^T, \ell^{T*}}_#text &= \begin{cases}
+  #letexp{x}{e}{#sug{\ell^{T*}}_#text} &\text{if} ~ \ell^T = (#set{x}{e}) \\
+  #sug{\ell^T}_#inl :: #sug{\ell^{T*}}_#text &\text{otherwise}
+\end{cases} \\
+#sug{s}_#inl &= s \\
+#sug{#bold{t^T}}_#inl &= #bold{#sug{t^T}_#text} \\
+#sug{e}_#inl &= #sug{e}_#expr \\
+\end{align*}
+$$
+
+*(Todo: how do we bridge the obvious parallelism between templates and documents without copying their structure? Something like evaluation contexts?)*
+
+$#dlang^{#msf{tree}}_{#msf{tmpl}}$ is comaprable to doclangs like [Scribble] and [Typst] which can interleave computation and strings in a structured document, like this Scribble program:
+
+```
+@(define x "world")
+
+@section{Greetings}
+
+Hello @(world)
+```
+
+## Reactivity
+
+%%%
+let view = #msf{view};
+let update = #msf{update};
+let state = #msf{State};
+let event = #msf{Event};
+let rlang = #{\mathcal{R}}
+let r_strvar = #{#rlang^#msf{str}_#msf{var}}
+let r_treeid = #{#rlang^{#msf{tree}}_{#msf{id}}};
+let r_treevar = #{#rlang^{#msf{tree}}_{#msf{var}}};
+let r_treetmpl = #{#rlang^{#msf{tree}}_{#msf{tmpl\text{-}var}}};
+let einit = #{e_#msf{init}}
+let eview = #{e_#msf{view}}
+let eupdate = #{e_#msf{update}};
+%%%
+
+Reactive documents change their structure in response to user interaction. We use an [Elm]-like architecture as a simple model of reactivity --- we assume that a document has a single global state that updates in response to a stream of events. Formally, a reactive document language $#rlang$ is an extension of a document language $#dlang$. A reactive document program consists of an initial state $#einit$, a view expression $#eview$, and an update expression $#eupdate$. While we have not defined an actual type system yet, informally if states have type $#state$ and events have type $#event$, then $#einit : #state$ and $#eview : #state \rightarrow #doc$ and $#eupdate : (#state, #event) \rightarrow #state$. The reactive runtime has the following execution trace:
+
+
+$$
+\begin{align*}
+s_0 &= #einit \\
+d_0 &= #eview ~ s_0 \\
+s_1 &= #eupdate ~ (s_0, v_0) \\
+d_1 &= #eview ~ s_1 \\
+s_2 &= #eupdate ~ (s_1, v_1) \\
+\ldots
+\end{align*}
+$$
+
+For example, if we imagine an extended version of $#d_treetmpl$ with a few basic features (lambdas, numbers, booleans, conditionals, equality, buttons) then a reactive counter could be implemented in $#r_treetmpl$ like this:
+
+$$
+\begin{align*}
+#einit &= 0 \\
+#eview &= \lambda n. ~ #msf{para}~[#quot{The count is: }, n, #msf{button}~#quot{Increment}] \\
+#eupdate &= \lambda (n, v). ~ #msf{if} ~ v = #quot{click} ~ #msf{then} ~ n + 1 ~ #msf{else} ~ n
+\end{align*}
+$$
+
+We now have three design dimensions:
+* **Document domain**: string, tree.
+* **Document computation**: literal, program, template literal, template language.
+* **Document runtime**: static, reactive.
+
+Let's review how existing tools fall into each category:
+
+// | Model | Category | Examples |
+// | - | - | - |
+// | $#d_strid$ | String literals | "..." in any GPPL, text files |
+// | $#d_strvar$ | String programs | String APIs in any GPPL |
+// | $#d_strtmpl1$ | String template literals | [JS templates][js-template], [Python templates][python-template] |
+// | $#d_strtmpl2$ | String template languages | [Jinja], [Handlebars] |
+// | $#d_treeid$ | Tree literals | [Markdown], [Pandoc], [rST], HTML |
+// | $#d_treevar$ | Tree programs | JS + [Web APIs][js-web-apis], Python + [xml.dom] |
+// | $#d_treetmpl$ | Tree template languages | [Scribble], [Typst] |
+// | $#r_strvar$ | Reactive string programs | Text editors |
+// | $#r_treeid$ | Reactive tree literals | [Angular] |
+// | $#r_treevar$ | Reactive tree programs | [Elm]
+// | $#r_treetmpl$ | Reactive tree template languages | [React], [Svelte], [Idyll], [Living Papers]
+
+% let Header = () => _.range(8).map(i => @th{#(i % 2 == 0 ? "Static" : "Reactive")})
+% let Tsp = ({children}) => @th[style: {fontVariant: "small-caps", border: "none"}]{#children}
+
+@table[style: {textAlign: "left"}]:
+  @thead:
+    @tr:
+      @Tsp: Domain
+      @th[colspan: 8]: String
+    @tr:
+      @Tsp: Computation
+      @th[colspan: 2]: Literal
+      @th[colspan: 2]: Program
+      @th[colspan: 2]: Template Literal
+      @th[colspan: 2]: Template Language
+    @tr:
+      @Tsp: Runtime
+      @Header
+  @tbody:
+    @tr:
+      @Tsp: Model
+      @td: $#d_strid$
+      @td: $#rlang^#msf{str}_#msf{id}$
+      @td: $#d_strvar$
+      @td: $#rlang^#msf{str}_#msf{var}$
+      @td: $#d_strtmpl1$
+      @td: $#rlang^#msf{str}_#msf{tmpl\text{-}var}$
+      @td: $#d_strtmpl2$
+      @td: $#rlang^#msf{str}_#msf{tmpl\text{-}lang}$
+    @tr:
+      @Tsp: Examples
+      @td: "..." in GPPLs. Text files.
+      @td: ?
+      @td: String APIs in GPPLs.
+      @td: Text editors?
+      @td: [JS template strings][js-template]. [Python f-strings][python-template].
+      @td: ?
+      @td: JS+[Handlebars]. Python+[Jinja]. [PHP].
+      @td: ?
+
+@table[style: {textAlign: "left"}]:
+  @thead:
+    @tr:
+      @Tsp: Domain
+      @th[colspan: 8]: Tree
+    @tr:
+      @Tsp: Computation
+      @th[colspan: 2]: Literal
+      @th[colspan: 2]: Program
+      @th[colspan: 2]: Template Literal
+      @th[colspan: 2]: Template Language
+    @tr:
+      @Tsp: Runtime
+      @Header
+  @tbody:
+    @tr:
+      @Tsp: Model
+      @td: $#d_treeid$
+      @td: $#rlang^#msf{tree}_#msf{id}$
+      @td: $#d_treevar$
+      @td: $#rlang^#msf{tree}_#msf{var}$
+      @td: $#d_treetmpl$
+      @td: $#rlang^#msf{tree}_#msf{tmpl\text{-}var}$
+      @td: $#dlang^#msf{tree}_#msf{tmpl\text{-}lang}$
+      @td: $#rlang^#msf{tree}_#msf{tmpl\text{-}lang}$
+    @tr:
+      @Tsp: Examples
+      @td: [Markdown]. [Pandoc]. [rST]. HTML
+      @td: [Angular].
+      @td: JS+[Web APIs][js-web-apis]. Python+[xml.dom]. Racket+[sexps].
+      @td: [Elm]. [Vanilla React][React].
+      @td: Quasiquoting (e.g. [Racket][racket-quasiquote], [Rust][rust-quote]).
+      @td: ?
+      @td: [LaTeX]. [Scribble]. [Typst].
+      @td: [JSX React]. [Svelte]. [Idyll]. [Living Papers].
+
+
+[Handlebars]: https://handlebarsjs.com/
+[Jinja]: https://jinja.palletsprojects.com/en/3.1.x/
+[js-template]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
+[python-template]: https://docs.python.org/3/library/string.html#format-string-syntax
+[Markdown]: https://commonmark.org/
+[Pandoc]: https://pandoc.org/
+[`document.createElement`]: https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement
+[Scribble]: https://docs.racket-lang.org/scribble/
+[JSX React]: https://react.dev/learn/writing-markup-with-jsx
+[Typst]: https://typst.app/
+[Elm]: https://elm-lang.org/
+[React]: https://reactjs.com/
+[Idyll]: https://idyll-lang.org/
+[Living Papers]: https://github.com/uwdata/living-papers/
+[Svelte]: https://svelte.dev/
+[js-web-apis]: https://developer.mozilla.org/en-US/docs/Web/API
+[xml.dom]: https://docs.python.org/3/library/xml.dom.html
+[Angular]: https://angular.io/
+[rST]: https://docutils.sourceforge.io/rst.html
+[sexps]: https://docs.racket-lang.org/scribble/base.html
+[racket-quasiquote]: https://docs.racket-lang.org/guide/qq.html
+[rust-quote]: https://github.com/dtolnay/quote
+[PHP]: https://www.php.net/
+[LaTeX]: https://www.latex-project.org/
+[MDX]: https://mdxjs.com/
+[Markdoc]: https://markdoc.dev/
+[Quarto]: https://quarto.org/
+[JupyterBook]: https://jupyterbook.org/

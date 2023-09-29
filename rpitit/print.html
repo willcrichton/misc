@@ -1,0 +1,360 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>RPITIT Survey</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> Chapter 1</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">RPITIT Survey</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rpitit-survey"><a class="header" href="#rpitit-survey">RPITIT Survey</a></h1>
+<p><em>Estimated time to complete: 10 minutes</em></p>
+<p>This survey is designed to gather the opinions of Rust developers about a new feature for the Rust language. Your feedback will help the Rust compiler developers weigh between different design choices.</p>
+<h2 id="demographics"><a class="header" href="#demographics">Demographics</a></h2>
+<p>First, we would like to know a little about you. </p>
+<ol>
+<li>
+<p>How many years of experience do you have with Rust? <br>
+<input type="text" /></p>
+</li>
+<li>
+<p>Which of the following best describes you?</p>
+</li>
+</ol>
+<ul>
+<li><input type="radio" name="a" /> I maintain Rust libraries used by many developers.</li>
+<li><input type="radio" name="a" /> I maintain small Rust libraries, but I mostly write application code.</li>
+<li><input type="radio" name="a" /> I only write Rust applications.</li>
+<li><input type="radio" name="a" /> I don't write much Rust code.</li>
+</ul>
+<h2 id="scenario"><a class="header" href="#scenario">Scenario</a></h2>
+<p>To explain the issue, we will present a hypothetical scenario of two Rust developers, Will and Maryyann. Will is the maintainer of the <code>books</code> crate, which provides utilities for working with collections of books. Our focus will be on two types <code>PersonalShelf</code> and <code>PublicLibrary</code>, and a method <code>available_books</code> for which books are available. A personal shelf always has all books available. A library has books available if the boolean in a <code>(String, bool)</code> pair is true. Will expresses this idea as follows:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+pub struct PersonalShelf {
+  pub books: Vec&lt;String&gt;
+}
+
+pub struct PublicLibrary {
+  pub books: Vec&lt;(String, bool)&gt;,  
+}
+
+impl PersonalShelf {
+  pub fn available_books(&amp;self) -&gt; impl ExactSizeIterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+  }
+}
+
+impl PublicLibrary {
+  pub fn available_books(&amp;self) -&gt; impl Iterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+      .filter_map(|(book, avail)| avail.then_some(book))
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Will wants to create an <code>AvailableBooks</code> trait that captures the shared behavior between the <code>PersonalShelf</code> and <code>PublicLibrary</code> types, like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+pub trait AvailableBooks {
+    fn available_books(&amp;self) -&gt; impl Iterator&lt;Item = &amp;String&gt;;
+}
+<span class="boring">}</span></code></pre></pre>
+<p>As of Rust 1.70, this trait will not compile because Rust does not permit trait methods to use <code>impl Trait</code> in return position. The Rust compiler team has a plan to remove this limitation, described in <a href="https://github.com/tmandry/rfcs/blob/rpitit/text/0000-return-position-impl-trait-in-traits.md">RFC 3425</a>. However, some design decisions in the RFC are not finalized. This survey will ask you to use your personal experience with Rust to evaluate one such design decision.</p>
+<p>Say that Rust allowed the <code>AvailableBooks</code> trait to compile as written. Our focus will be on the different possible implementations of <code>AvailableBooks</code> that Will can write. Say he refactors his inherent impls by simply adding <code>AvailableBooks for</code> and changing nothing else, like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+impl AvailableBooks for PersonalShelf {
+  pub fn available_books(&amp;self) -&gt; impl ExactSizeIterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+  }
+}
+
+impl AvailableBooks for PublicLibrary {
+  pub fn available_books(&amp;self) -&gt; impl Iterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+      .filter_map(|(book, avail)| avail.then_some(book))
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Notice that the trait expects <code>impl Iterator</code>, but the <code>PersonalShelf::available_books</code> implementation provies <code>impl ExactSizeIterator</code>. As a brief refresher, the <a href="https://doc.rust-lang.org/std/iter/trait.Iterator.html"><code>Iterator</code> trait</a> is the core trait that defines iterable objects. The <a href="https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html"><code>ExactSizeIterator</code> trait</a> is a sub-trait of <code>Iterator</code> that provides a few additional methods like <code>.len()</code> which returns the length of the iterator.</p>
+<p>The key design question is: what should Rust do when a trait implementation provides a <em>more specific</em> type than is required in the trait definition? In particular, should an API client be allowed to use knowledge of the more specific type? For now, let's assume that Rust allows Will's implementation to compile, and let's assume that Rust allows any API client of <code>travel</code> to know that <code>PersonalShelf::available_books</code> returns an <code>ExactSizeIterator</code>. To explore this design choice, we will walk through a good situation and a bad situation.</p>
+<h3 id="the-good-situation"><a class="header" href="#the-good-situation">The Good Situation</a></h3>
+<p>Say that Will's intention as the library author is that &quot;a personal shelf's available books are always exactly as listed in its <code>books</code> vector&quot; is a public part of the specification for <code>PersonalShelf::available_books</code>. Say that Maryyann is an API client of <code>books</code> and wants to use the knowledge that <code>PersonalShelf::available_books</code> returns an <code>ExactSizeIterator</code>, like this:</p>
+<pre><pre class="playground"><code class="language-rust">// my-library/main.rs
+
+use books::PersonalShelf;
+
+fn main() {
+  let shelf = PersonalShelf {
+    books: vec![&quot;War and Peace&quot;.into(), &quot;The Rust Programming Language&quot;.into()]
+  };
+  assert_eq!(shelf.available_books().len(), 2);
+}</code></pre></pre>
+<p>In this situation, everything is good — Will expects that Maryyann can call <code>shelf.available_books().len()</code>, and Maryyann is able to do so.</p>
+<h3 id="the-bad-situation"><a class="header" href="#the-bad-situation">The Bad Situation</a></h3>
+<p>Now say that Will's intention as a library author is different. Will wrote <code>PersonalShelf::available_books</code> to return <code>ExactSizeIterator</code> solely for internal testing purposes. Will likes to write return types as specific as possible to catch problems when implementations change. But he did not intend for Maryyann to be able to rely on this detail. After publishing <code>v0.1.0</code> of <code>books</code>, he later updates the implementation of <code>PersonalShelf::available_books</code> to filter accidental empty strings, like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+impl PersonalShelf {
+  pub fn available_books(&amp;self) -&gt; impl Iterator&lt;Item = &amp;String&gt; {
+    self.books.iter().filter(|title| title != &quot;&quot;)
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Will thinks this is a non-breaking change and publishes <code>v0.1.1</code>. Maryyann runs <code>cargo update</code>, which updates <code>travel v0.1.0 -&gt; v0.1.1</code>. Then Maryyann runs <code>cargo check</code> and her code has broken, because <code>shelf.available_books()</code> does not have a method <code>.len()</code>.</p>
+<p>This situation is bad because Will didn't realize he was making a breaking change. He violated the rules of semantic versioning, and wasted some of Maryyann's time.</p>
+<h3 id="an-alternative"><a class="header" href="#an-alternative">An Alternative</a></h3>
+<p>The Rust developers are considering an additional feature to prevent these kinds of bad situations from happening. Say that Will tries to write a trait implementation returning <code>ExactSizeIterator</code> as before:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+impl AvailableBooks for PersonalShelf {
+  pub fn available_books(&amp;self) -&gt; impl ExactSizeIterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Under this alternative, the Rust compiler would reject this program with the following error:</p>
+<pre><code class="language-text">error[EXXX]: the type signature of the implementation of method `available_books` 
+  in trait `AvailableBooks` for type `PersonalShelf`...
+  --&gt; lib.rs:8
+  8 |   fn available_books(&amp;self) -&gt; impl ExactSizeIterator&lt;Item = &amp;String&gt; {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    |  ...is more specific than the type signature of the method 
+    |     in the trait definition:
+    |
+  --&gt; lib.rs:2
+  2 | pub trait AvailableBooks {
+    |  ...
+    |  fn available_books(&amp;self) -&gt; impl Iterator&lt;Item = &amp;String&gt;;
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: consider adding #[refine] to the implementation
+</code></pre>
+<p>As the help message suggests, Will can explicitly write down his intention to expose the fact that <code>ExactSizeIterator</code> should be a public detail by adding the <code>#[refine]</code> attribute, like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// books/lib.rs
+
+impl AvailableBooks for PersonalShelf {
+  #[refine]
+  pub fn available_books(&amp;self) -&gt; impl ExactSizeIterator&lt;Item = &amp;String&gt; {
+    self.books.iter()
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>This implementation is allowed to compile, and Maryyann's program is also allowed to call <code>shelf.available_books().len()</code>.</p>
+<h2 id="questions"><a class="header" href="#questions">Questions</a></h2>
+<p>To establish some terms, let's call this general problem the issue of &quot;trait refinement&quot;. The original scenario presents a strategy where Rust does &quot;implicit refinement&quot; — Will writes a more specific type in the trait implementation, and any API client can use the more specific type. The alternative scenario presents a strategy where Rust does &quot;explicit refinement&quot; — Will can only write a more specific type if he adds the <code>#[refine]</code> keyword.</p>
+<p>You have seen the good and bad of implicit refinement in a hypothetical scenario. The good is that API clients can use the details of an implementation without any extra work from the API author. The bad is that the API author might not always be aware of which details are public, leading to semver hazards.</p>
+<p>Now, we want you to reflect on your own Rust experience. When would these kinds of situations arise in the libraries you use or maintain? With that in mind, please answer the following questions. There is no correct answer — we just want your intuition based on your Rust experience.</p>
+<p><strong>1. On balance, do you think trait refinement should be implicit or explicit?</strong></p>
+<ul>
+<li><input type="radio" name="b" /> Implicit</li>
+<li><input type="radio" name="b" /> Explicit</li>
+</ul>
+<p><strong>2. Do you think Rust should use the <code>#[refine]</code> mechanism for trait refinement?</strong></p>
+<ul>
+<li><input type="radio" name="b" /> Yes, Rust should use <code>#[refine]</code> for trait refinement</li>
+<li><input type="radio" name="b" /> No, Rust should not use <code>#[refine]</code> for trait refinement</li>
+</ul>
+<p><strong>3. Which of the following best describes your answers to Questions 1 and 2?</strong></p>
+<ul>
+<li><input type="radio" name="c" /> Trait refinement should be explicit and <code>#[refine]</code> seems like a reasonable mechanism for it</li>
+<li><input type="radio" name="c" /> Trait refinement should be explicit, but I would prefer a different mechanism than <code>#[refine]</code> for refinement</li>
+<li><input type="radio" name="c" /> Trait refinement should be implicit, so <code>#[refine]</code> is unnecessary</li>
+<li><input type="radio" name="c"> I have a different answer that I will explain below.</li>
+</ul>
+<p><strong>3. (Optional) Explain the rationale behind the answers to Questions 1-3.</strong></p>
+<textarea style="width:100%;height:5em;"></textarea>
+<p><strong>4. (Optional) Give an example from your own experience which you think supports using implicit or explicit trait refinement.</strong></p>
+<textarea style="width:100%;height:5em;"></textarea>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </body>
+</html>

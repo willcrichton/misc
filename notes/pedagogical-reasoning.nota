@@ -1,0 +1,154 @@
+@Title: Extending the Rational Model of Pedagogical Reasoning
+
+%%% 
+let X = texRef("expert", "X")
+let L = texRef("learner", "L")
+let C = texRef("concept", "C")
+let h = texRef("hypothesis", "h")
+let e = texRef("evidence", "e")
+let hc = macro{#h _{#C}}()
+%%%
+
+# A Basic Model of Instruction
+
+Consider 
+@Definition[name: "expert"]{an expert $#X$ (e.g. Will)} 
+and 
+@Definition[name: "learner"]{a learner $#L$ (e.g. a Rust Book reader)}. 
+@Definition[name: "concept"]{The expert is trying to teach a concept $#C$ (e.g. how enums works in Rust).} 
+@Definition[name: "evidence"]{The expert generates an explanation $#e$}, 
+and 
+@Definition[name: "hypothesis"]{the reader reads $#e$ to infer a mental model (or hypothesis) $#h$ about the concept.}
+The expert wants the reader to infer a correct hypothesis $#h _{#C}$.
+
+The expert's criterion for selecting $#e$ can be modeled as an optimization over a probability space:
+
+% let argmax = macro{\mathop{\underset{#1}{\mathsf{argmax}}}}
+% let argmin = macro{\mathop{\underset{#1}{\mathsf{argmin}}}}
+% let author = macro{#texRef{author}{\mathsf{author}(#1)}}
+
+@Definition[name: "author"]:
+  $$
+  #author{#h _{#C}} = #argmax{#e} P_{#X}(#h _{#C} \mid #e)
+  $$
+
+That is, the expert picks the explanation $#e$ that maximizes the probability of inferring $#h _{#C}$ given $#e$. Similarly, the reader's process for learning from $#e$ can be modeled like this:
+
+% let learn = macro{#texRef{learn}{\mathsf{learn}(#1)}}
+
+@Definition[name: "learn"]:
+  $$
+  #learn{#e} = #argmax{#h} P_{#L}(#h \mid #e)
+  $$
+
+The reader selects the most likely hypothesis $#h$ given the explanation $#e$. 
+
+# A Model of Improving Instruction through Quizzes
+
+Note that the expert has a hypothetical model of learning $P_{#X}$, and the learner has an actual model of learning $P_{#L}$. If these are a different, then it's possible that $#learn{#author{#h _{#C}}} \neq # h _{#C}$.
+
+Therefore one goal is to minimize the distance between $P_{#X}$ and $P_{#L}$, i.e. $\mathsf{dist}(P_{#X} || P_{#L})$. If we knew the learner's inferred hypothesis $#h$, then roughly this minimization process would be to increase the probability of $#h$ given $#e$ under $P_{#X}$. Then subsequent iterations of $#author{#h _{#C}}$ would be less likely to generate $#e$.
+
+However, we cannot directly observe the learner's inferred hypothesis $#h$. But we can observe *traces* of the hypothesis through quizzes. Given a question $q$ with answers $\vec{a}$, a person selects an answer by this model:
+
+% let answer = macro{#texRef{answer}{\mathsf{answer}_{#1}(#2)}}
+% let answers = macro{#texRef{answers}{#1 \mathop{\mathsf{is}\text{-}\mathsf{answer}\text{-}\mathsf{to}} #2}}
+
+@Definition[name: "answer"]:
+  $$
+  #answer{M}{q, \vec{a}, #h} = #argmax{i} P_M(#answers{a_i}{q} \mid #h)
+  $$
+
+Given a belief $#h$, the person selects the most likely answer $a_i$ (@Definition[name:"answers"]{using the shorthand $#answers{a_i}{q}$ for $a_i$ is the correct answer to $q$}).
+
+An expert then writes quiz questions such that only readers with the correct mental model will answer correctly, modeled as:
+
+% let buildquiz = macro{#texRef{build-quiz}{\mathsf{build}\text{-}{\mathsf{quiz}({#1})}}}
+
+@Definition[name: "build-quiz"]:
+  $$
+  #buildquiz{#h _{#C}} = #argmax{(q, \vec{a})} \left[#answers{#answer{#X}{q, \vec{a}, #h _{#C}}}{q}\right]
+  $$
+
+That is, questions where the most likely answer is the correct answer when the learner has the correct mental model $#h _{#C}$. Note that this model is based on $P_{#X}$, while the learner will actually answer based on $P_{#L}$.
+
+After observing an answer $i$ from the learner, then the expert can infer the learner's true hypothesis as:
+
+% let inventory = macro{#texRef{inventory}{\mathsf{inventory}(#1)}}
+
+@Definition[name: "inventory"]:
+  $$
+  #inventory{q, \vec{a}, i} = #argmax{#h}\left[i = #answer{#X}{q, \vec{a}, #h} \right]
+  $$
+
+# Incorrect Models from Sub-rational Explanations
+
+An alternative explanation of why a learner acquires an incorrect mental model is because the author did not fully ("rationally") generate an explanation according to these models. For example, recall the definition of authoring:
+
+$$
+#author{#h _{#C}} = #argmax{#e} P_{#X}(#h _{#C} \mid #e)
+$$
+
+If the expert did not consider all possible explanations $#e$, then they might select a sub-optimal explanation --- a local maximum, not a global maximum in the probability space. We could investigate which explanations an expert might not consider. We could investigate how to prompt experts (via principles, via automated tooling) to consider a wider explanation space.
+
+Another possibility is that the learner did not consider all possible hypotheses $#h$ in their process:
+
+$$
+#learn{#e} = #argmax{#h} P_{#L}(#h \mid #e)
+$$
+
+A learner will likely generate a small number of hypotheses based on any number of cognitive biases. Understanding those biases can improve how the expert generates the explanation $#e$ to overcome the biases.
+
+# Explaining Rust, Specifically
+
+%%% 
+let H = texRef("hypotheses", "H");
+let E = texRef("explanations", "E");
+%%%
+
+.@Definition[name: "hypotheses"]: Let the universe of hypotheses $#H$ be all semantic models of Rust syntax. 
+Then $#hc \in #H$ is the true semantic model of Rust. 
+@Definition[name: "explanations"]: Let the universe of explanations $#E$ be all pairs $(i, #hc(i))$ of Rust programs and outputs (either a compiler error or an execution trace). 
+Recall the definition of authoring:
+
+$$
+#author{#hc} = #argmax{#e} P_{#X}(#hc \mid #e)
+$$
+
+How does an author select the best $#e \in #E$ to explain $#hc$? First, we need to define a probability distribution $P(#h \mid #e)$, i.e. the probability of a particular semantics given an example. Applying Bayes' rule:
+
+$$
+P(#h \mid #e) \propto P(#e \mid #h)P(#h)
+$$
+
+The probabiltity $P((i, o) \mid #h)$ is simply $I[h(i) = o]$, i.e. whether the input/output pair is consistent with $#h$. $P(#h)$ is the prior probability of $#h$. 
+
+A trivial strategy to maximize $P(#h \mid #e)$ is to select an input $i$ such that only $#hc$ is consistent with $i$, and no other possible hypothesis. However, the space of possible misunderstanding is large, and such an $#e$ would probably consist mostly of edge cases against each misconception. We would also like to minimize the size of $#e$, balanced against the maximization of $P(#h \mid #e)$.
+
+% let hm = texRef("hm", "H_M")
+
+@Definition[name: "hm"]:
+  &nbsp; For a given $e$, let $#hm(e)$ be the set of misconceptions consistent with $e$:
+
+  $$
+  #hm((i, o)) = \{#h \in #H \mid #h(i) = o \wedge #h \neq #hc\}
+  $$
+
+Then our goal can be rewritten as:
+
+% let a = texRef("a", "\alpha");
+
+$$
+\mathsf{author}(#hc) = #argmin{#e} \left[ |#e|^{#a} * \sum_{#h \in #hm(#e)} P(#h)\right]
+$$
+
+.@Definition[name: "a"]: Where $#a$ is a parameter that represents an author's tolerance to longer examples. 
+That is, the optimal example $#e$ balances being small and minimizing the prior probability of incorrect consistent hypotheses.
+
+The challenge is to define $P(#h)$, the prior probability of a hypothesis. When a learner considers two hypotheses consistent with the explanation, which do they pick? Here are a few criterion we might expect learners to use:
+
+* **Parsimony:** a language would probably be designed around simpler rules than more complex rules, so a simpler $#h$ is preferred over a more complex $#h$.
+* **Similarity to other languages**: a person would expect a programming language to be designed similar to languages they have seen before, so they prefer an $#h$ similar to an $#h'$ they hold about another known language.
+* What else? Thinking of Chi, Feltovich, Glaser '81: novices prefer explanations in terms of surface syntax, while experts prefer deeper explanations.
+
+If we can computationally define $#hm(#e)$ and $P(#H)$, then can automatically generate good examples to explain concepts!
